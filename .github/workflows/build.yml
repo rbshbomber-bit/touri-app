@@ -1,0 +1,152 @@
+name: 🐰 토우리 빌드 (맥미니 self-hosted)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'android/**'
+      - 'ios/**'
+      - 'web/**'
+      - '.github/workflows/**'
+  workflow_dispatch:        # 수동 실행 버튼
+
+# 동시 실행 방지 (맥미니 발열/충돌 방지)
+concurrency:
+  group: touri-build
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────────
+  # 1) 웹 빌드 → (선택) Vercel 배포
+  # ─────────────────────────────────────────────
+  web:
+    name: 🌐 Web 빌드
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flutter 버전 확인
+        run: flutter --version
+
+      - name: pub get
+        run: flutter pub get
+
+      - name: 웹 빌드
+        run: flutter build web --release
+
+      - name: 아티팩트 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build-${{ github.sha }}
+          path: build/web/
+          retention-days: 14
+
+      # Vercel 토큰이 있으면 자동 배포
+      - name: Vercel 배포 (선택)
+        if: ${{ env.VERCEL_TOKEN != '' }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm i -g vercel
+          cd build/web
+          vercel deploy --prod --token "$VERCEL_TOKEN" --yes || echo "Vercel 미설정 - 건너뜀"
+
+  # ─────────────────────────────────────────────
+  # 2) Android APK 빌드 → iCloud Drive + (선택) Firebase
+  # ─────────────────────────────────────────────
+  android:
+    name: 📱 Android APK
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pub get
+        run: flutter pub get
+
+      - name: APK 빌드 (release)
+        run: flutter build apk --release
+
+      - name: iCloud Drive로 복사
+        run: |
+          DEST="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Touri-Builds"
+          mkdir -p "$DEST"
+          TS=$(date +%Y%m%d-%H%M%S)
+          cp build/app/outputs/flutter-apk/app-release.apk "$DEST/touri-${TS}-${GITHUB_SHA:0:7}.apk"
+          ls -la "$DEST" | tail -5
+
+      - name: 아티팩트 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+      # Firebase App Distribution 자동 배포 (토큰 있을 때)
+      - name: Firebase 배포 (선택)
+        if: ${{ secrets.FIREBASE_TOKEN != '' && secrets.FIREBASE_APP_ID != '' }}
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        run: |
+          npm i -g firebase-tools
+          firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
+            --app "$FIREBASE_APP_ID" \
+            --token "$FIREBASE_TOKEN" \
+            --groups testers \
+            --release-notes "🐰 ${GITHUB_SHA:0:7} | $(git log -1 --pretty=%s)"
+
+  # ─────────────────────────────────────────────
+  # 3) iOS IPA 빌드 → TestFlight (Apple Developer 계정 필요)
+  # ─────────────────────────────────────────────
+  ios:
+    name: 🍎 iOS IPA
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 40
+    # iOS 빌드는 코드사인 셋업 후에 활성화
+    if: ${{ vars.IOS_BUILD_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pub get
+        run: flutter pub get
+
+      - name: CocoaPods install
+        run: cd ios && pod install --repo-update
+
+      - name: IPA 빌드
+        run: flutter build ipa --release
+
+      - name: 아티팩트 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa-${{ github.sha }}
+          path: build/ios/ipa/*.ipa
+          retention-days: 30
+
+  # ─────────────────────────────────────────────
+  # 4) 빌드 완료 알림 (선택 - 슬랙 웹훅 있을 때)
+  # ─────────────────────────────────────────────
+  notify:
+    name: 🔔 알림
+    needs: [web, android]
+    if: always()
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - name: Slack 알림 (선택)
+        if: ${{ secrets.SLACK_WEBHOOK != '' }}
+        run: |
+          STATUS="${{ needs.android.result }}"
+          EMOJI="✅"; [[ "$STATUS" != "success" ]] && EMOJI="❌"
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"${EMOJI} 토우리 빌드 ${STATUS} | \`${GITHUB_SHA:0:7}\` | $(git log -1 --pretty=%s)\"}" \
+            "${{ secrets.SLACK_WEBHOOK }}" || true
+
+      - name: macOS 시스템 알림 (로컬)
+        run: |
+          osascript -e 'display notification "토우리 빌드 완료!" with title "🐰 Touri Build" sound name "Glass"' || true

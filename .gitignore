@@ -1,0 +1,119 @@
+# ====================
+# Flutter / Dart
+# ====================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_*.png
+linked_*.ds
+unlinked.ds
+unlinked_spec.ds
+
+# Generated files
+**/generated_plugin_registrant.*
+**/*.g.dart
+**/*.freezed.dart
+**/*.mocks.dart
+
+# pubspec.lock — 라이브러리 프로젝트면 무시, 앱이면 커밋 (Flutter 공식)
+# pubspec.lock
+
+# ====================
+# iOS
+# ====================
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Default.xcconfig
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Runner/GeneratedPluginRegistrant.*
+ios/build/
+**/*.xcuserdatad/
+**/*.mode1v3
+**/*.mode2v3
+**/*.perspectivev3
+**/DerivedData/
+ios/Runner.xcworkspace/xcuserdata/
+ios/Runner.xcodeproj/xcuserdata/
+ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+
+# ====================
+# Android
+# ====================
+android/.gradle/
+android/.idea/
+android/captures/
+android/local.properties
+android/key.properties
+android/app/release/
+android/app/debug/
+android/app/profile/
+android/app/google-services.json
+**/*.keystore
+**/*.jks
+
+# ====================
+# Web
+# ====================
+web/build/
+
+# ====================
+# 환경변수 / Secrets (절대 커밋 금지)
+# ====================
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.cert
+*.key
+service-account*.json
+firebase_options.dart
+
+# ====================
+# IDE
+# ====================
+.vscode/
+.idea/
+*.iml
+*.iws
+.project
+.classpath
+.settings/
+.history/
+
+# ====================
+# macOS
+# ====================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# ====================
+# 빌드 산출물 (로컬 보관용)
+# ====================
+*.apk
+*.aab
+*.ipa
+*.app
+build-output/
+
+# ====================
+# 로그
+# ====================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
