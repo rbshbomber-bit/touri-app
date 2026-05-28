@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>🐰 토우리 프로토타입 v0.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Pretendard:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --touri-pink: #FFB6C1;
+    --soft-pink: #FFD1DC;
+    --cloud-pink: #FFE9EE;
+    --warm-white: #FFF8F5;
+    --mist-pink: #FFF1F6;
+    --cocoa: #8E7A7A;
+    --cocoa-dark: #6B5A55;
+    --bubble: #FFD6E7;
+    --lavender: #E8D6FF;
+    --lilac: #EADCF9;
+    --mint: #D6F5E3;
+    --cream: #FFF6D6;
+    --sky: #DCEBFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background: linear-gradient(180deg, #FFF1F6 0%, #FFE9EE 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 20px;
+    color: var(--cocoa);
+  }
+  .container {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 32px;
+    max-width: 1100px;
+    width: 100%;
+  }
+  @media (max-width: 800px) {
+    .container { grid-template-columns: 1fr; }
+  }
+
+  /* ─── Phone Frame ─── */
+  .phone {
+    background: #2A2520;
+    padding: 14px;
+    border-radius: 44px;
+    box-shadow: 0 30px 60px rgba(255, 182, 193, 0.25);
+    width: 380px;
+    margin: 0 auto;
+  }
+  .screen {
+    background: var(--warm-white);
+    border-radius: 32px;
+    overflow: hidden;
+    height: 740px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 24px 8px;
+    font-size: 12px;
+    color: var(--cocoa);
+    font-weight: 600;
+  }
+  .status-bar .icons { display: flex; gap: 6px; font-size: 12px; }
+
+  .header {
+    padding: 8px 20px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .header .date {
+    font-size: 10px;
+    color: #C2A8A0;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  .header h1 {
+    font-family: 'Gaegu', cursive;
+    font-size: 26px;
+    color: var(--cocoa-dark);
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  .avatars { display: flex; gap: 5px; }
+  .avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    color: white;
+    border: 2px solid white;
+  }
+  .avatar.me { background: var(--touri-pink); }
+  .avatar.shi { background: #B89CDF; }
+  .avatar.ji  { background: #6FCBA1; }
+
+  /* ─── AI Card ─── */
+  .ai-card {
+    margin: 6px 20px 14px;
+    padding: 12px 14px;
+    background: var(--cloud-pink);
+    border-radius: 18px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border: 1px dashed #FFC9D6;
+  }
+  .ai-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: white;
+    flex-shrink: 0;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.3);
+  }
+  .ai-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }
+  .ai-body { flex: 1; min-width: 0; }
+  .ai-label {
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    color: var(--touri-pink);
+    font-weight: 600;
+  }
+  .ai-text {
+    font-size: 14px;
+    color: var(--cocoa-dark);
+    line-height: 1.45;
+    margin-top: 2px;
+  }
+  .ai-refresh {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--touri-pink);
+    font-size: 16px;
+    transition: transform .2s;
+  }
+  .ai-refresh:hover { transform: rotate(180deg); }
+
+  /* ─── Diary Page ─── */
+  .diary {
+    margin: 0 20px;
+    flex: 1;
+    background: #FFFCF6;
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #F0E5D5;
+    background-image: repeating-linear-gradient(transparent, transparent 28px, #F4E0D2 28px, #F4E0D2 29px);
+  }
+  .tape {
+    position: absolute;
+    height: 24px;
+    width: 70px;
+    opacity: 0.6;
+  }
+  .tape-1 { top: -8px; left: 30px; background: var(--touri-pink); transform: rotate(-3deg); }
+  .tape-2 { top: -8px; right: 30px; background: var(--lavender); transform: rotate(4deg); }
+
+  .mood-sticker {
+    position: absolute;
+    top: 18px; right: 16px;
+    width: 96px; height: 96px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
+    transform: rotate(4deg);
+    background: white;
+    transition: opacity .3s;
+  }
+  .mood-sticker img { width: 100%; height: 100%; object-fit: cover; }
+
+  .diary-title {
+    position: absolute;
+    top: 24px; left: 24px;
+    font-family: 'Gaegu', cursive;
+    font-size: 17px;
+    color: var(--touri-pink);
+    font-weight: 700;
+  }
+  .diary-body {
+    position: absolute;
+    top: 58px; left: 28px; right: 120px;
+    font-family: 'Nanum Pen Script', cursive;
+    font-size: 17px;
+    color: var(--cocoa-dark);
+    line-height: 29px;
+  }
+  .diary-body div { margin-bottom: 2px; }
+
+  .friend-cursor {
+    position: absolute;
+    pointer-events: none;
+    transition: top 2s cubic-bezier(.4,0,.2,1), left 2s cubic-bezier(.4,0,.2,1);
+    z-index: 10;
+  }
+  .friend-cursor .icon {
+    font-size: 18px;
+    color: #7B5FB8;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .friend-cursor .label {
+    background: #B89CDF;
+    color: white;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 4px;
+    font-weight: 600;
+    vertical-align: 4px;
+  }
+
+  /* ─── Mood Tray ─── */
+  .tray-label {
+    margin: 14px 20px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #C2A8A0;
+  }
+  .tray-label .active {
+    color: var(--touri-pink);
+    font-weight: 700;
+  }
+  .tray {
+    margin: 0 20px 14px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .mood-btn {
+    border: 3px solid transparent;
+    background: white;
+    border-radius: 16px;
+    padding: 0;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all .2s;
+    aspect-ratio: 1;
+    position: relative;
+  }
+  .mood-btn img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block;
+  }
+  .mood-btn:hover { transform: translateY(-3px); }
+  .mood-btn.active {
+    border-color: var(--touri-pink);
+    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.4);
+  }
+  .mood-btn::after {
+    content: attr(data-label);
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(255, 248, 245, 0.92);
+    color: var(--cocoa-dark);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 0;
+    letter-spacing: 0.3px;
+  }
+
+  .home-bar {
+    width: 110px; height: 4px;
+    background: #2A2520;
+    border-radius: 2px;
+    margin: 0 auto 8px;
+    margin-top: auto;
+  }
+
+  /* ─── Right Panel ─── */
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .badge {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--touri-pink);
+    font-weight: 600;
+  }
+  .info h2 {
+    font-family: 'Gaegu', cursive;
+    font-size: 32px;
+    color: var(--cocoa-dark);
+    font-weight: 700;
+    margin-top: 4px;
+    line-height: 1.2;
+  }
+  .info p { font-size: 14px; line-height: 1.6; color: var(--cocoa); }
+
+  .info-card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px 20px;
+    border: 1px solid var(--cloud-pink);
+  }
+  .info-card h3 {
+    font-size: 13px;
+    color: var(--touri-pink);
+    font-weight: 600;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+  .info-card ul { list-style: none; padding: 0; }
+  .info-card li {
+    font-size: 13px;
+    color: var(--cocoa);
+    line-height: 1.7;
+    padding-left: 18px;
+    position: relative;
+  }
+  .info-card li::before {
+    content: '♡';
+    position: absolute;
+    left: 0; top: 0;
+    color: var(--touri-pink);
+  }
+  .info-card b { color: var(--cocoa-dark); font-weight: 600; }
+
+  .palette {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .swatch {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══ PHONE MOCKUP ═══ -->
+  <div class="phone">
+    <div class="screen">
+
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="icons">
+          <span>📶</span><span>📡</span><span>🔋</span>
+        </div>
+      </div>
+
+      <div class="header">
+        <div>
+          <div class="date">2026 . 05 . 25 · MON</div>
+          <h1>토우리 일기</h1>
+        </div>
+        <div class="avatars">
+          <div class="avatar me">나</div>
+          <div class="avatar shi" title="시현">시</div>
+          <div class="avatar ji" title="지우">지</div>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ai-avatar">
+          <img id="ai-img" src="../assets/character/scenes/scene_secretary.png" alt="토우리">
+        </div>
+        <div class="ai-body">
+          <div class="ai-label">TOURI ✦</div>
+          <div class="ai-text" id="ai-text">오늘 일정 정리 도와줄까? 같이 해보자.</div>
+        </div>
+        <button class="ai-refresh" id="ai-refresh" aria-label="새 메시지">↻</button>
+      </div>
+
+      <div class="diary">
+        <div class="tape tape-1"></div>
+        <div class="tape tape-2"></div>
+
+        <div class="mood-sticker">
+          <img id="mood-img" src="../assets/character/scenes/scene_secretary.png" alt="">
+        </div>
+
+        <div class="diary-title">오늘의 다짐 ✦</div>
+
+        <div class="diary-body" id="diary-body">
+          <div>· 회의 자료 30분 안에 끝내기</div>
+          <div>· 점심엔 샐러드 한 그릇</div>
+          <div>· 친구한테 안부 메시지</div>
+          <div>· 자기 전 5분 다이어리</div>
+        </div>
+
+        <div class="friend-cursor" id="friend-cursor" style="top: 200px; left: 60px;">
+          <span class="icon">▲</span>
+          <span class="label">시현</span>
+        </div>
+      </div>
+
+      <div class="tray-label">
+        <span>오늘의 토우리 무드</span>
+        <span class="active" id="mood-label">비서 모드</span>
+      </div>
+
+      <div class="tray" id="tray">
+        <button class="mood-btn active" data-mood="secretary"
+          data-img="../assets/character/scenes/scene_secretary.png"
+          data-label="비서"
+          data-ai-options='["오늘 일정 정리 도와줄까? 같이 해보자.","회의 전 5분, 깊게 숨 한번 쉬자","To-do 3개만 골라보자. 다 안 해도 돼."]'
+          data-todos='["회의 자료 30분 안에 끝내기","점심엔 샐러드 한 그릇","친구한테 안부 메시지","자기 전 5분 다이어리"]'>
+          <img src="../assets/character/scenes/scene_secretary.png" alt="비서 토우리">
+        </button>
+        <button class="mood-btn" data-mood="exercise"
+          data-img="../assets/character/scenes/scene_exercise.png"
+          data-label="운동"
+          data-ai-options='["5분만 스트레칭 해볼까? 작은 거부터!","숨이 차도 괜찮아, 천천히","어제보다 0.1mm 더 움직였어"]'
+          data-todos='["스트레칭 5분","계단 한 층만 더","물 2L 마시기","나 자신 칭찬하기"]'>
+          <img src="../assets/character/scenes/scene_exercise.png" alt="운동 토우리">
+        </button>
+        <button class="mood-btn" data-mood="diet"
+          data-img="../assets/character/scenes/scene_diet.png"
+          data-label="식단"
+          data-ai-options='["천천히, 나답게, 건강하게!","오늘도 잘하고 있어 - 작은 변화가 큰 변화를 만들어요","물 한 컵 마실 시간이야"]'
+          data-todos='["물 2L 마시기","건강한 식사 한 끼","과일 한 접시","나 자신 칭찬하기"]'>
+          <img src="../assets/character/scenes/scene_diet.png" alt="다이어트 토우리">
+        </button>
+        <button class="mood-btn" data-mood="dream"
+          data-img="../assets/character/scenes/scene_grid_9panels.png"
+          data-label="꿈 ✦"
+          data-ai-options='["이번 주에 이루고 싶은 거 하나만 적어볼까?","꿈은 작아도 진짜야. 적어두자.","걱정 하나, 다짐 하나로 바꿔보자"]'
+          data-todos='["이번 주 manifestation","감사한 일 3가지","미래 나에게 한 마디","꿈 일기 쓰기"]'>
+          <img src="../assets/character/scenes/scene_grid_9panels.png" alt="꿈 토우리" style="object-position: 50% 60%;">
+        </button>
+      </div>
+
+      <div class="home-bar"></div>
+    </div>
+  </div>
+
+  <!-- ═══ INFO PANEL ═══ -->
+  <div class="info">
+    <div>
+      <div class="badge">PROTOTYPE v0.2 · 실제 캐릭터 적용</div>
+      <h2>진짜 토우리가<br>들어왔어요 ♡</h2>
+      <p style="margin-top: 12px;">
+        원본 일러스트 6장을 그대로 합성·배치만 했어요. AI로 재생성·재해석 없음.<br>
+        무드 클릭 → 다이어리 표지·AI 멘트·할 일이 함께 바뀝니다.
+      </p>
+    </div>
+
+    <div class="info-card">
+      <h3>자산 보존 원칙</h3>
+      <ul>
+        <li>원본 1254×1254 PNG <b>수정 0회</b> — 모든 표시는 CSS로만 비율 유지</li>
+        <li><b>object-fit: cover</b> — 어떤 컨테이너에 넣어도 안 늘어남</li>
+        <li>웹·앱 모두 동일 자산 — Flutter에서도 같은 PNG 그대로 번들링</li>
+        <li>AI 재생성 <b>없음</b> — 새 일러스트가 필요하면 항상 별도 작업</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>공식 컬러 팔레트 (캐릭터 시트 기준)</h3>
+      <div class="palette">
+        <div class="swatch" style="background: #FFE9EE" title="#FFE9EE Cloud"></div>
+        <div class="swatch" style="background: #FFD1DC" title="#FFD1DC Soft"></div>
+        <div class="swatch" style="background: #FFB6C1" title="#FFB6C1 Touri Pink"></div>
+        <div class="swatch" style="background: #FFF1F6" title="#FFF1F6 Mist"></div>
+        <div class="swatch" style="background: #E8D6FF" title="#E8D6FF Lavender"></div>
+        <div class="swatch" style="background: #D6F5E3" title="#D6F5E3 Mint"></div>
+        <div class="swatch" style="background: #FFF6D6" title="#FFF6D6 Cream"></div>
+        <div class="swatch" style="background: #DCEBFF" title="#DCEBFF Sky"></div>
+        <div class="swatch" style="background: #EADCF9" title="#EADCF9 Lilac"></div>
+        <div class="swatch" style="background: #FFD6E7" title="#FFD6E7 Bubble"></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3>다음 단계</h3>
+      <ul>
+        <li>캐릭터 시트의 <b>표정 6종</b> 개별 PNG로 분리 (앱 내 마스코트용)</li>
+        <li>Flutter 시작: <b>lib/screens/diary_screen.dart</b></li>
+        <li>9컷 일러스트에서 장면별 1:1 크롭 (투명 배경)</li>
+        <li>한국어 손글씨 폰트 라이선스 확정 (Gaegu / Nanum Pen 등)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+const tray = document.getElementById('tray');
+const aiImg = document.getElementById('ai-img');
+const moodImg = document.getElementById('mood-img');
+const aiText = document.getElementById('ai-text');
+const moodLabel = document.getElementById('mood-label');
+const aiRefresh = document.getElementById('ai-refresh');
+const diaryBody = document.getElementById('diary-body');
+
+function setMood(btn) {
+  tray.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const img = btn.dataset.img;
+  aiImg.src = img;
+  moodImg.src = img;
+  moodLabel.textContent = btn.dataset.label + ' 모드';
+  const opts = JSON.parse(btn.dataset.aiOptions);
+  aiText.textContent = opts[0];
+  const todos = JSON.parse(btn.dataset.todos);
+  diaryBody.innerHTML = todos.map(t => '<div>· ' + t + '</div>').join('');
+}
+
+tray.querySelectorAll('.mood-btn').forEach(btn => {
+  btn.addEventListener('click', () => setMood(btn));
+});
+
+aiRefresh.addEventListener('click', () => {
+  const active = tray.querySelector('.mood-btn.active');
+  const opts = JSON.parse(active.dataset.aiOptions);
+  const idx = opts.indexOf(aiText.textContent);
+  aiText.textContent = opts[(idx + 1) % opts.length];
+});
+
+// 친구 커서 애니메이션
+const cursor = document.getElementById('friend-cursor');
+const path = [
+  {t: 80, l: 60}, {t: 130, l: 180}, {t: 210, l: 100},
+  {t: 250, l: 200}, {t: 180, l: 50}, {t: 90, l: 220}
+];
+let step = 0;
+setInterval(() => {
+  step = (step + 1) % path.length;
+  cursor.style.top = path[step].t + 'px';
+  cursor.style.left = path[step].l + 'px';
+}, 2400);
+</script>
+
+</body>
+</html>

@@ -7,11 +7,11 @@
 
 set -euo pipefail
 
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; CYAN='\033[0;36m'; NC='\033[0m'
-ok()      { echo -e "${GREEN}✓${NC} $*"; }
-warn()    { echo -e "${YELLOW}⚠${NC} $*"; }
-err()     { echo -e "${RED}✗${NC} $*" >&2; }
-section() { echo; echo -e "${CYAN}━━━ $* ━━━${NC}"; }
+GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; RED=$'\033[0;31m'; CYAN=$'\033[0;36m'; NC=$'\033[0m'
+ok()      { printf "%s✓%s %s\n" "$GREEN" "$NC" "$*"; }
+warn()    { printf "%s⚠%s %s\n" "$YELLOW" "$NC" "$*"; }
+err()     { printf "%s✗%s %s\n" "$RED" "$NC" "$*" >&2; }
+section() { printf "\n%s━━━ %s ━━━%s\n" "$CYAN" "$*" "$NC"; }
 
 # ─── 사전 점검 ─────────────────────────────────────
 section "사전 점검"
@@ -106,24 +106,27 @@ fi
 # ─── 마무리 ───────────────────────────────────────
 section "✅ 완료"
 REPO_URL="https://github.com/${GH_USER}/touri-app"
-cat <<EOF
-
+printf "
 🎉 Repo가 GitHub에 올라갔어!
-   ${REPO_URL}
+   %s
 
 📋 다음 단계:
 
 1. 맥미니에서 셋업:
-   ${YELLOW}curl -fsSL ${REPO_URL}/raw/main/setup-macmini.sh -o setup.sh${NC}
-   ${YELLOW}chmod +x setup.sh${NC}
-   ${YELLOW}REPO_OWNER=${GH_USER} ./setup.sh${NC}
+   %scurl -fsSL %s/raw/main/setup-macmini.sh -o setup.sh%s
+   %schmod +x setup.sh%s
+   %sREPO_OWNER=%s ./setup.sh%s
 
 2. Self-Hosted Runner 등록:
-   ${REPO_URL}/settings/actions/runners/new
+   %s/settings/actions/runners/new
 
 3. Secrets 등록:
-   ${REPO_URL}/settings/secrets/actions
+   %s/settings/secrets/actions
 
 자세한 가이드: SETUP-MACMINI.md
-EOF
+" "$REPO_URL" \
+  "$YELLOW" "$REPO_URL" "$NC" \
+  "$YELLOW" "$NC" \
+  "$YELLOW" "$GH_USER" "$NC" \
+  "$REPO_URL" "$REPO_URL"
 ok "🐰"

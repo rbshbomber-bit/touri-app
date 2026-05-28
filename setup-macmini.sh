@@ -7,18 +7,25 @@
 
 set -euo pipefail
 
-# ─── 컬러 출력 ──────────────────────────────────────
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; CYAN='\033[0;36m'; NC='\033[0m'
-log()    { echo -e "${CYAN}▶${NC} $*"; }
-ok()     { echo -e "${GREEN}✓${NC} $*"; }
-warn()   { echo -e "${YELLOW}⚠${NC} $*"; }
-err()    { echo -e "${RED}✗${NC} $*" >&2; }
-section(){ echo; echo -e "${CYAN}━━━ $* ━━━${NC}"; }
+# ─── 컬러 출력 (heredoc에서도 동작하도록 $'...' 사용) ──
+GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; RED=$'\033[0;31m'; CYAN=$'\033[0;36m'; NC=$'\033[0m'
+log()    { printf "%s▶%s %s\n" "$CYAN" "$NC" "$*"; }
+ok()     { printf "%s✓%s %s\n" "$GREEN" "$NC" "$*"; }
+warn()   { printf "%s⚠%s %s\n" "$YELLOW" "$NC" "$*"; }
+err()    { printf "%s✗%s %s\n" "$RED" "$NC" "$*" >&2; }
+section(){ printf "\n%s━━━ %s ━━━%s\n" "$CYAN" "$*" "$NC"; }
 
 # ─── 설정 (필요시 수정) ──────────────────────────────
 REPO_OWNER="${REPO_OWNER:-CHANGE_ME}"          # GitHub 사용자명
 REPO_NAME="${REPO_NAME:-touri-app}"
-PROJECT_DIR="${HOME}/touri-app"
+
+# 현재 디렉토리가 이미 touri-app git repo면 그대로 사용, 아니면 ~/touri-app
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -d "${SCRIPT_DIR}/.git" ]] && [[ -f "${SCRIPT_DIR}/pubspec.yaml" || -f "${SCRIPT_DIR}/setup-macmini.sh" ]]; then
+  PROJECT_DIR="${PROJECT_DIR:-$SCRIPT_DIR}"
+else
+  PROJECT_DIR="${PROJECT_DIR:-${HOME}/touri-app}"
+fi
 
 # ─── 사전 검사 ──────────────────────────────────────
 section "사전 검사"
@@ -128,14 +135,13 @@ fi
 
 # ─── 마무리 ────────────────────────────────────────
 section "✅ 셋업 완료"
-cat <<EOF
-
+printf "
 다음 단계:
 
-1. ${YELLOW}Tailscale${NC} 로그인 + 디바이스 이름을 'touri-mac-mini'로 변경
+1. %sTailscale%s 로그인 + 디바이스 이름을 'touri-mac-mini'로 변경
 
-2. ${YELLOW}GitHub Self-Hosted Runner${NC} 등록:
-   - https://github.com/${REPO_OWNER}/${REPO_NAME}/settings/actions/runners/new
+2. %sGitHub Self-Hosted Runner%s 등록:
+   - https://github.com/%s/%s/settings/actions/runners/new
    - macOS / ARM64 선택
    - 표시되는 명령어를 그대로 복붙 실행
    - 완료 후 백그라운드 자동 실행:
@@ -143,15 +149,15 @@ cat <<EOF
        sudo ./svc.sh install
        sudo ./svc.sh start
 
-3. ${YELLOW}Xcode${NC} 한 번 열어서 Apple ID 로그인 (iOS 빌드용)
+3. %sXcode%s 한 번 열어서 Apple ID 로그인 (iOS 빌드용)
        open -a Xcode
 
 4. 첫 빌드 테스트:
-   - 맥북에서 'git commit --allow-empty -m "test"' + push
+   - 맥북에서 'git commit --allow-empty -m \"test\"' + push
    - GitHub Actions 탭에서 맥미니가 받았는지 확인
 
-iCloud Drive 빌드 출력 폴더는 자동 생성됨:
-   ~/Library/Mobile Documents/com~apple~CloudDocs/Touri-Builds/
+📁 작업 폴더: %s
+📦 빌드 결과: ~/Library/Mobile Documents/com~apple~CloudDocs/Touri-Builds/
 
-EOF
+" "$YELLOW" "$NC" "$YELLOW" "$NC" "$REPO_OWNER" "$REPO_NAME" "$YELLOW" "$NC" "$PROJECT_DIR"
 ok "🐰 토우리 빌드 서버 준비 완료!"
