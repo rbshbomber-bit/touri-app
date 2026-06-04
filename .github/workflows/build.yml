@@ -32,6 +32,20 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Prepare runtime assets (.env, touri_lora_url.txt)
+        run: |
+          # .env — GitHub Secrets 있으면 사용, 없으면 빈 파일 (fallback 동작)
+          {
+            [ -n "${{ secrets.FAL_KEY }}" ] && echo "FAL_KEY=${{ secrets.FAL_KEY }}"
+            [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ] && echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}"
+          } > .env
+          # touri_lora_url.txt — secret 있으면 진짜 LoRA URL, 없으면 빈 파일
+          if [ -n "${{ secrets.TOURI_LORA_URL }}" ]; then
+            echo "${{ secrets.TOURI_LORA_URL }}" > touri_lora_url.txt
+          else
+            touch touri_lora_url.txt
+          fi
+
       - name: Flutter pub get
         run: flutter pub get
 
@@ -57,6 +71,20 @@ jobs:
         with:
           channel: stable
           cache: true
+
+      - name: Prepare runtime assets (.env, touri_lora_url.txt)
+        run: |
+          # .env — GitHub Secrets 있으면 사용, 없으면 빈 파일 (fallback 동작)
+          {
+            [ -n "${{ secrets.FAL_KEY }}" ] && echo "FAL_KEY=${{ secrets.FAL_KEY }}"
+            [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ] && echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}"
+          } > .env
+          # touri_lora_url.txt — secret 있으면 진짜 LoRA URL, 없으면 빈 파일
+          if [ -n "${{ secrets.TOURI_LORA_URL }}" ]; then
+            echo "${{ secrets.TOURI_LORA_URL }}" > touri_lora_url.txt
+          else
+            touch touri_lora_url.txt
+          fi
 
       - name: Flutter pub get
         run: flutter pub get
