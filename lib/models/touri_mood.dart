@@ -15,7 +15,8 @@ enum TouriMood {
       '오늘 감사한 일 3가지',
       '미래 나에게 한 마디',
     ],
-    imagePath: 'assets/character/scenes/scene_grid_9panels.png',
+    imagePath: 'assets/character/scenes/scene_space.png',
+    avatarPath: 'assets/character/scenes/scene_space_avatar.png',
   ),
   secretary(
     id: 'secretary',
@@ -31,6 +32,7 @@ enum TouriMood {
       '내일 준비 5분',
     ],
     imagePath: 'assets/character/scenes/scene_secretary.png',
+    avatarPath: 'assets/character/scenes/scene_secretary_avatar.png',
   ),
   exercise(
     id: 'exercise',
@@ -46,6 +48,7 @@ enum TouriMood {
       '물 2L 마시기',
     ],
     imagePath: 'assets/character/scenes/scene_exercise.png',
+    avatarPath: 'assets/character/scenes/scene_exercise_avatar.png',
   ),
   diet(
     id: 'diet',
@@ -61,6 +64,7 @@ enum TouriMood {
       '간식 한 번 줄이기',
     ],
     imagePath: 'assets/character/scenes/scene_diet.png',
+    avatarPath: 'assets/character/scenes/scene_diet_avatar.png',
   );
 
   const TouriMood({
@@ -69,6 +73,7 @@ enum TouriMood {
     required this.aiOptions,
     required this.suggestedTodos,
     required this.imagePath,
+    required this.avatarPath,
   });
 
   final String id;
@@ -76,6 +81,7 @@ enum TouriMood {
   final List<String> aiOptions;
   final List<String> suggestedTodos;
   final String imagePath;
+  final String avatarPath;
 
   static TouriMood fromId(String id) =>
       TouriMood.values.firstWhere((m) => m.id == id, orElse: () => TouriMood.manifest);

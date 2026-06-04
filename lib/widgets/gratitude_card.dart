@@ -56,7 +56,7 @@ class GratitudeCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 firstLine.isEmpty ? '오늘 작은 거 3가지!' : firstLine,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TouriTheme.handwriting(
                   fontSize: 15,

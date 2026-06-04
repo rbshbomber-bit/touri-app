@@ -25,10 +25,16 @@ jobs:
   # ─────────────────────────────────────────────
   web:
     name: 🌐 Web 빌드
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
+      - name: Flutter 셋업
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
 
       - name: Flutter 버전 확인
         run: flutter --version
@@ -57,14 +63,29 @@ jobs:
           vercel deploy --prod --token "$VERCEL_TOKEN" --yes || echo "Vercel 미설정 - 건너뜀"
 
   # ─────────────────────────────────────────────
-  # 2) Android APK 빌드 → iCloud Drive + (선택) Firebase
+  # 2) Android APK 빌드 (GitHub Ubuntu runner — SDK 자동 셋업)
   # ─────────────────────────────────────────────
   android:
     name: 📱 Android APK
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
+      - name: JDK 17 셋업
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Flutter 셋업
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Android SDK 셋업
+        uses: android-actions/setup-android@v3
 
       - name: pub get
         run: flutter pub get
@@ -72,18 +93,10 @@ jobs:
       - name: APK 빌드 (release)
         run: flutter build apk --release
 
-      - name: iCloud Drive로 복사
-        run: |
-          DEST="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Touri-Builds"
-          mkdir -p "$DEST"
-          TS=$(date +%Y%m%d-%H%M%S)
-          cp build/app/outputs/flutter-apk/app-release.apk "$DEST/touri-${TS}-${GITHUB_SHA:0:7}.apk"
-          ls -la "$DEST" | tail -5
-
       - name: 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk-${{ github.sha }}
+          name: touri-apk-${{ github.sha }}
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
@@ -136,7 +149,7 @@ jobs:
     name: 🔔 알림
     needs: [web, android]
     if: always()
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ubuntu-latest
     steps:
       - name: Slack 알림 (선택)
         if: ${{ secrets.SLACK_WEBHOOK != '' }}
@@ -144,9 +157,5 @@ jobs:
           STATUS="${{ needs.android.result }}"
           EMOJI="✅"; [[ "$STATUS" != "success" ]] && EMOJI="❌"
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"${EMOJI} 토우리 빌드 ${STATUS} | \`${GITHUB_SHA:0:7}\` | $(git log -1 --pretty=%s)\"}" \
+            --data "{\"text\":\"${EMOJI} 토우리 빌드 ${STATUS} | \`${GITHUB_SHA:0:7}\`\"}" \
             "${{ secrets.SLACK_WEBHOOK }}" || true
-
-      - name: macOS 시스템 알림 (로컬)
-        run: |
-          osascript -e 'display notification "토우리 빌드 완료!" with title "🐰 Touri Build" sound name "Glass"' || true

@@ -49,9 +49,9 @@ class _AiCompanionCardState extends State<AiCompanionCard> {
             ),
             clipBehavior: Clip.antiAlias,
             child: Image.asset(
-              mood.imagePath,
+              mood.avatarPath,
               fit: BoxFit.cover,
-              alignment: const Alignment(0, -0.4),
+              alignment: Alignment.center,
             ),
           ),
           const SizedBox(width: 12),

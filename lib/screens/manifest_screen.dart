@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/touri_colors.dart';
 import '../theme/touri_theme.dart';
+import '../widgets/touri_app_bar.dart';
 
 /// 매니페스테이션 보드 풀스크린. 여러 줄 자유 입력.
 /// 닫기 = 자동 저장 (Navigator.pop에 텍스트 반환).
@@ -38,6 +39,10 @@ class _ManifestScreenState extends State<ManifestScreen> {
       },
       child: Scaffold(
         backgroundColor: TouriColors.warmWhite,
+        appBar: const TouriAppBar(
+          title: '오늘 부르는 미래',
+          subtitle: '한 줄 적어볼까',
+        ),
         body: SafeArea(
           child: Stack(
             children: [

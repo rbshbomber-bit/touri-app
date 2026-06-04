@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/touri_colors.dart';
 import '../theme/touri_theme.dart';
+import '../widgets/touri_app_bar.dart';
 
 /// 감사 일기 풀스크린. 3개 슬롯. 닫기 = 자동 저장.
 class GratitudeScreen extends StatefulWidget {
@@ -45,6 +46,10 @@ class _GratitudeScreenState extends State<GratitudeScreen> {
       },
       child: Scaffold(
         backgroundColor: TouriColors.warmWhite,
+        appBar: const TouriAppBar(
+          title: '오늘의 감사',
+          subtitle: '세 가지만 떠올려봐',
+        ),
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
