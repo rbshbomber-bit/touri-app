@@ -9,6 +9,12 @@ concurrency:
   group: touri-build-${{ github.ref }}
   cancel-in-progress: true
 
+# GitHub Pages 배포에 필요한 권한
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   android:
     name: Android APK
@@ -89,8 +95,8 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Build Web
-        run: flutter build web --release
+      - name: Build Web (base-href = /touri-app/)
+        run: flutter build web --release --base-href "/touri-app/"
 
       - name: Upload Web Build
         uses: actions/upload-artifact@v4
@@ -98,3 +104,21 @@ jobs:
           name: touri-web-${{ github.sha }}
           path: build/web/
           retention-days: 14
+
+      - name: GitHub Pages 배포용 아티팩트
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web/
+
+  # ─── GitHub Pages 배포 ──────────────────────────
+  deploy_web:
+    name: 🌐 Deploy Web → GitHub Pages
+    needs: web
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
