@@ -51,14 +51,27 @@ class TouriRoomGame extends FlameGame with TapCallbacks {
     _player = TouriPlayer(col: sc, row: sr)..priority = 10;
     world.add(_player);
 
-    // 카메라 — 줌인 + 방 전체 보기
-    camera.viewfinder.zoom = 2.6;
-    final mapW = RoomMap.width * RoomMap.tileSize;
-    final mapH = RoomMap.height * RoomMap.tileSize;
+    // 카메라 — 방 전체가 들어오게 자동 줌 (onGameResize에서 재계산)
+    final mapW = RoomMap.width * RoomMap.tileSize;   // 256
+    final mapH = RoomMap.height * RoomMap.tileSize;  // 192
+    camera.viewfinder.zoom = 1.5; // 방 전체 보이게 (방이 잘리지 않음)
     camera.setBounds(Rectangle.fromLTWH(0, 0, mapW, mapH));
     camera.viewfinder.position = Vector2(mapW / 2, mapH / 2);
 
     _scheduleNextAction();
+  }
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    // 게임 영역 크기에 맞춰 zoom 자동 조정 — 방 전체가 항상 화면에 들어옴
+    final mapW = RoomMap.width * RoomMap.tileSize;
+    final mapH = RoomMap.height * RoomMap.tileSize;
+    final zoomX = size.x / mapW;
+    final zoomY = size.y / mapH;
+    final fitZoom = math.min(zoomX, zoomY);
+    // 너무 작아지지 않게 최소 1.0, 너무 커지지 않게 최대 3.0
+    camera.viewfinder.zoom = fitZoom.clamp(1.0, 3.0);
   }
 
   void _scheduleNextAction() {
