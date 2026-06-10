@@ -75,6 +75,18 @@ enum GrowthStage {
     }
   }
 
+  /// 픽셀 다마고치 4프레임 sprite 경로.
+  /// 파일 없으면 PixelSpriteAvatar가 자동으로 fallbackPath로 폴백.
+  List<String> get spriteFramePaths {
+    final base = 'assets/character/pet/${name}';
+    return [
+      '${base}_1.png',
+      '${base}_2.png',
+      '${base}_3.png',
+      '${base}_4.png',
+    ];
+  }
+
   /// fallback 이미지 (생성 이미지 없을 때).
   String get fallbackPath {
     switch (this) {

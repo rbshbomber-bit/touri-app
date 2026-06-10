@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/touri_colors.dart';
 import '../services/pet_service.dart';
+import 'touri_motion.dart';
 
 /// 홈 피드 상단에 박는 토우리 상태창.
 /// 좌측 토우리 아바타 + 단계 라벨 + 우측 능력치 막대 3개.
@@ -31,28 +32,28 @@ class PetStatusCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 토우리 아바타
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: TouriColors.touriPink.withOpacity(0.25),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.asset(
-                      stage.imagePath,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Image.asset(
-                        stage.fallbackPath,
+                  // 토우리 아바타 — 픽셀 sprite 4프레임 자동 순환 (없으면 static)
+                  AnimatedTouriAvatar(
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: TouriColors.touriPink.withOpacity(0.25),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: PixelSpriteAvatar(
+                        framePaths: stage.spriteFramePaths,
+                        fallbackPath: stage.imagePath,
+                        size: 64,
                         fit: BoxFit.cover,
                       ),
                     ),

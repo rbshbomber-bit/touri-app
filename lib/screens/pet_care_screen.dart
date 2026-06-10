@@ -4,10 +4,20 @@ import '../theme/touri_theme.dart';
 import '../services/pet_service.dart';
 import '../models/pet_stat.dart';
 import '../widgets/touri_app_bar.dart';
+import '../widgets/touri_motion.dart';
 
 /// 토우리 돌보기. 큰 토우리 + 능력치 + 일일 액션 3개 + 진화 컷씬.
-class PetCareScreen extends StatelessWidget {
+class PetCareScreen extends StatefulWidget {
   const PetCareScreen({super.key});
+
+  @override
+  State<PetCareScreen> createState() => _PetCareScreenState();
+}
+
+class _PetCareScreenState extends State<PetCareScreen> {
+  int _reactionTrigger = 0;
+  String _reactionSymbol = '♡';
+  Color _reactionColor = TouriColors.touriPink;
 
   @override
   Widget build(BuildContext context) {
@@ -37,12 +47,25 @@ class PetCareScreen extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Image.asset(
-                        stage.imagePath,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => Image.asset(
-                          stage.fallbackPath,
+                      // 픽셀 sprite 4프레임이 있으면 다마고치 애니메이션,
+                      // 없으면 정적 일러스트로 fallback (PixelSpriteAvatar 내부 처리).
+                      // 외부 AnimatedTouriAvatar로 떠다님(float) 효과 추가.
+                      AnimatedTouriAvatar(
+                        amplitude: 0.035,
+                        float: true,
+                        child: PixelSpriteAvatar(
+                          framePaths: stage.spriteFramePaths,
+                          fallbackPath: stage.imagePath,
+                          size: 220,
                           fit: BoxFit.contain,
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: ReactionBurst(
+                          trigger: _reactionTrigger,
+                          symbol: _reactionSymbol,
+                          color: _reactionColor,
+                          origin: const Alignment(0, -0.05),
                         ),
                       ),
                       Positioned(
@@ -152,6 +175,8 @@ class PetCareScreen extends StatelessWidget {
                           context,
                           PetService.instance.feed,
                           '🍓 토우리가 행복하게 먹었어',
+                          '♡',
+                          TouriColors.touriPink,
                         ),
                       ),
                     ),
@@ -167,6 +192,8 @@ class PetCareScreen extends StatelessWidget {
                           context,
                           PetService.instance.play,
                           '🫂 토우리가 폭 안겼어',
+                          '✦',
+                          const Color(0xFF7B5FB8),
                         ),
                       ),
                     ),
@@ -182,6 +209,8 @@ class PetCareScreen extends StatelessWidget {
                           context,
                           PetService.instance.rest,
                           '💤 토우리가 쌔근쌔근',
+                          '☾',
+                          TouriColors.mint,
                         ),
                       ),
                     ),
@@ -269,7 +298,13 @@ class PetCareScreen extends StatelessWidget {
     );
   }
 
-  void _doCare(BuildContext context, bool Function() action, String msg) {
+  void _doCare(
+    BuildContext context,
+    bool Function() action,
+    String msg,
+    String symbol,
+    Color color,
+  ) {
     final ok = action();
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -281,6 +316,11 @@ class PetCareScreen extends StatelessWidget {
       );
       return;
     }
+    setState(() {
+      _reactionTrigger++;
+      _reactionSymbol = symbol;
+      _reactionColor = color;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
