@@ -11,8 +11,8 @@ import 'spirituality_screen.dart';
 import 'news_screen.dart';
 import 'auth_sheet.dart';
 import 'pet_care_screen.dart';
-import 'pixel_touri_lab_screen.dart';
 import 'touri_rpg_screen.dart';
+import 'admin_screen.dart';
 
 /// 메뉴 — 3열 그리드 9개 진입점. 각 카드 토우리 이미지 + 라벨.
 class MenuScreen extends StatefulWidget {
@@ -25,6 +25,10 @@ class MenuScreen extends StatefulWidget {
 class _MenuScreenState extends State<MenuScreen> {
   final TouriStorage _storage = TouriStorage();
   late final String _dateKey;
+
+  // 숨은 관리자 진입 — 헤더 "메뉴"를 3초 안에 7번 탭
+  int _adminTapCount = 0;
+  DateTime? _lastTap;
 
   @override
   void initState() {
@@ -103,10 +107,22 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  void _openPixelLab() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PixelTouriLabScreen()),
-    );
+  void _onHeaderTap() {
+    final now = DateTime.now();
+    if (_lastTap == null ||
+        now.difference(_lastTap!) > const Duration(seconds: 3)) {
+      _adminTapCount = 1; // 3초 넘으면 카운터 리셋
+    } else {
+      _adminTapCount++;
+    }
+    _lastTap = now;
+    if (_adminTapCount >= 7) {
+      _adminTapCount = 0;
+      _lastTap = null;
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AdminScreen()),
+      );
+    }
   }
 
   void _openRpg() {
@@ -158,13 +174,6 @@ class _MenuScreenState extends State<MenuScreen> {
         label: '그려줘',
         accent: TouriColors.lilac,
         onTap: () => _openDiary(hintGenerate: true),
-      ),
-      // 🎨 도트 토우리 랩 — touri-pixel LoRA 테스트
-      _MenuItem(
-        image: 'assets/character/menu_icons/generate.png',
-        label: '도트 랩 🎨',
-        accent: TouriColors.bubble,
-        onTap: _openPixelLab,
       ),
       _MenuItem(
         image: 'assets/character/menu_icons/sticker_make.png',
@@ -218,9 +227,13 @@ class _MenuScreenState extends State<MenuScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '메뉴',
-                style: Theme.of(context).textTheme.displayMedium,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _onHeaderTap,
+                child: Text(
+                  '메뉴',
+                  style: Theme.of(context).textTheme.displayMedium,
+                ),
               ),
               const SizedBox(height: 4),
               Text(

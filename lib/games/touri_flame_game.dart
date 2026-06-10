@@ -148,6 +148,9 @@ class TouriFlameGame extends FlameGame with TapCallbacks {
   }
 }
 
+// 친구 단계 전용 액션 10종 — assets/character/actions/friend/{action}_{1-4}.png
+enum TouriAction { idle, walk, eat, jump, happy, sleep, surprise, sad, wave, dance }
+
 // ─── 토우리 캐릭터 ───────────────────────────────
 class _TouriCharacter extends PositionComponent with HasGameReference<TouriFlameGame> {
   final GrowthStage stage;
@@ -163,6 +166,13 @@ class _TouriCharacter extends PositionComponent with HasGameReference<TouriFlame
   final math.Random _rng = math.Random();
   double _nextActionAt = 0;
 
+  // 친구 단계 액션 시스템 (다른 단계는 기존 spriteFramePaths 사용)
+  bool _useActions = false;
+  final Map<TouriAction, SpriteAnimation> _actionAnims = {};
+  TouriAction _currentAction = TouriAction.idle;
+  double _actionHold = 0; // 현재 액션 고정 시간 (eat→happy 시퀀스용)
+  TouriAction? _afterHold; // 고정 끝나면 전환할 액션
+
   _TouriCharacter({required this.stage}) {
     size = Vector2.all(180);
     anchor = Anchor.bottomCenter;
@@ -171,19 +181,42 @@ class _TouriCharacter extends PositionComponent with HasGameReference<TouriFlame
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    // 4프레임 sprite 애니메이션 — game.images로 로드 (prefix='' 설정됨)
-    final frames = await Future.wait(
-      stage.spriteFramePaths.map((p) async {
-        try {
-          final img = await game.images.load(p);
-          return Sprite(img);
-        } catch (_) {
-          final img = await game.images.load(stage.imagePath);
-          return Sprite(img);
+    _useActions = stage == GrowthStage.friend;
+
+    if (_useActions) {
+      // 친구 단계 — 액션 10종 × 4프레임 (stepTime 0.18) 로드
+      for (final action in TouriAction.values) {
+        final frames = <Sprite>[];
+        for (int i = 1; i <= 4; i++) {
+          try {
+            final img = await game.images
+                .load('assets/character/actions/friend/${action.name}_$i.png');
+            frames.add(Sprite(img));
+          } catch (_) {
+            // 프레임 누락 시 친구 기본 이미지로 폴백
+            frames.add(Sprite(await game.images.load(stage.imagePath)));
+          }
         }
-      }),
-    );
-    _animation = SpriteAnimation.spriteList(frames, stepTime: 0.4, loop: true);
+        _actionAnims[action] =
+            SpriteAnimation.spriteList(frames, stepTime: 0.18, loop: true);
+      }
+      _animation = _actionAnims[TouriAction.idle];
+    } else {
+      // 그 외 단계 — 기존 4프레임 spriteFramePaths (prefix='' 설정됨)
+      final frames = await Future.wait(
+        stage.spriteFramePaths.map((p) async {
+          try {
+            final img = await game.images.load(p);
+            return Sprite(img);
+          } catch (_) {
+            final img = await game.images.load(stage.imagePath);
+            return Sprite(img);
+          }
+        }),
+      );
+      _animation = SpriteAnimation.spriteList(frames, stepTime: 0.4, loop: true);
+    }
+
     _sprite = SpriteAnimationComponent(
       animation: _animation,
       size: size,
@@ -195,11 +228,66 @@ class _TouriCharacter extends PositionComponent with HasGameReference<TouriFlame
     // 초기 위치 — 화면 중앙 풀바닥 위
     position = Vector2(game.size.x / 2, game.size.y - 50);
     _targetX = position.x;
+    _currentAction = TouriAction.idle;
     _scheduleNextAction();
   }
 
   void _scheduleNextAction() {
-    _nextActionAt = _rng.nextDouble() * 3 + 2; // 2-5초 후 다음 행동
+    // 친구(액션 시스템)는 5-8초, 그 외는 2-5초
+    _nextActionAt =
+        _useActions ? _rng.nextDouble() * 3 + 5 : _rng.nextDouble() * 3 + 2;
+  }
+
+  /// 액션 sprite 교체 (친구 단계만). hold>0이면 그 시간 동안 고정 후 then 액션으로.
+  void setAction(TouriAction action, {double hold = 0, TouriAction? then}) {
+    if (!_useActions) return;
+    _currentAction = action;
+    final anim = _actionAnims[action];
+    if (anim != null && _sprite != null) {
+      _sprite!.animation = anim;
+    }
+    _actionHold = hold;
+    _afterHold = then;
+  }
+
+  /// 가중 랜덤 액션: idle/walk 70% · jump/dance/wave 20% · sleep/sad/surprise 10%
+  TouriAction _randomAction() {
+    final r = _rng.nextDouble();
+    if (r < 0.70) {
+      return _rng.nextBool() ? TouriAction.idle : TouriAction.walk;
+    } else if (r < 0.90) {
+      const g = [TouriAction.jump, TouriAction.dance, TouriAction.wave];
+      return g[_rng.nextInt(g.length)];
+    } else {
+      const g = [TouriAction.sleep, TouriAction.sad, TouriAction.surprise];
+      return g[_rng.nextInt(g.length)];
+    }
+  }
+
+  /// 친구 단계 자동 액션 사이클
+  void _updateActionCycle(double dt) {
+    if (_actionHold > 0) {
+      _actionHold -= dt;
+      if (_actionHold <= 0) {
+        setAction(_afterHold ?? TouriAction.idle);
+        _afterHold = null;
+        _scheduleNextAction();
+      }
+      return;
+    }
+    _nextActionAt -= dt;
+    if (_nextActionAt <= 0) {
+      final action = _randomAction();
+      if (action == TouriAction.walk) {
+        final w = game.size.x;
+        walkTo(50 + _rng.nextDouble() * (w - 100));
+      } else {
+        _targetX = position.x; // 제자리 액션
+        if (action == TouriAction.jump) tapped();
+      }
+      setAction(action);
+      _scheduleNextAction();
+    }
   }
 
   void walkTo(double x) {
@@ -216,8 +304,14 @@ class _TouriCharacter extends PositionComponent with HasGameReference<TouriFlame
   }
 
   void celebrate() {
-    // 딸기 먹고 기뻐서 폴짝
-    tapped();
+    if (_useActions) {
+      // 딸기 먹기 → eat(0.72s) 후 happy 로 전환
+      _targetX = position.x; // 먹는 동안 제자리
+      setAction(TouriAction.eat, hold: 0.72, then: TouriAction.happy);
+    } else {
+      // 딸기 먹고 기뻐서 폴짝
+      tapped();
+    }
   }
 
   @override
@@ -231,9 +325,18 @@ class _TouriCharacter extends PositionComponent with HasGameReference<TouriFlame
     final strawberry = game.nearestStrawberryPos;
     if (strawberry != null) {
       walkTo(strawberry.x);
+      // 친구는 추적 중 walk 액션 (단, eat/happy 시퀀스 중엔 유지)
+      if (_useActions &&
+          _actionHold <= 0 &&
+          _currentAction != TouriAction.walk) {
+        setAction(TouriAction.walk);
+      }
       _nextActionAt = 1.0; // 자동 행동 잠시 중단
+    } else if (_useActions) {
+      // 친구 단계 — 액션 sprite 자동 사이클
+      _updateActionCycle(dt);
     } else {
-      // 자동 행동 — 가끔 새 위치로 걷거나 점프
+      // 그 외 단계 — 가끔 새 위치로 걷거나 점프
       _nextActionAt -= dt;
       if (_nextActionAt <= 0) {
         if (_rng.nextDouble() < 0.7) {

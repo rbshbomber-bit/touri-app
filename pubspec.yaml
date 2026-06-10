@@ -44,6 +44,7 @@ flutter:
     - assets/character/packs/valentine/
     - assets/character/pet/
     - assets/character/rpg_sprites/
+    - assets/character/actions/friend/
     - .env
     - touri_lora_url.txt
     - touri_pixel_lora_url.txt
