@@ -5,6 +5,7 @@ import '../services/pet_service.dart';
 import '../models/pet_stat.dart';
 import '../widgets/touri_app_bar.dart';
 import '../widgets/touri_motion.dart';
+import '../widgets/touri_game_scene.dart';
 
 /// 토우리 돌보기. 큰 토우리 + 능력치 + 일일 액션 3개 + 진화 컷씬.
 class PetCareScreen extends StatefulWidget {
@@ -36,60 +37,17 @@ class _PetCareScreenState extends State<PetCareScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               children: [
-                // ── 큰 토우리 일러스트 ──
-                Container(
-                  height: 240,
-                  decoration: BoxDecoration(
-                    color: TouriColors.cloudPink.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // 픽셀 sprite 4프레임이 있으면 다마고치 애니메이션,
-                      // 없으면 정적 일러스트로 fallback (PixelSpriteAvatar 내부 처리).
-                      // 외부 AnimatedTouriAvatar로 떠다님(float) 효과 추가.
-                      AnimatedTouriAvatar(
-                        amplitude: 0.035,
-                        float: true,
-                        child: PixelSpriteAvatar(
-                          framePaths: stage.spriteFramePaths,
-                          fallbackPath: stage.imagePath,
-                          size: 220,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: ReactionBurst(
-                          trigger: _reactionTrigger,
-                          symbol: _reactionSymbol,
-                          color: _reactionColor,
-                          origin: const Alignment(0, -0.05),
-                        ),
-                      ),
-                      Positioned(
-                        top: 12,
-                        right: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '연속 ${pet.streak}일 ✦',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF7B5FB8),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                // ── 다마고치 게임 화면 (Phase 2 1단계) ──
+                // 토우리가 좌우로 걸어다님 + 가끔 점프 + 탭 반응 + 픽셀 풀바닥
+                TouriGameScene(
+                  framePaths: stage.spriteFramePaths,
+                  fallbackPath: stage.imagePath,
+                  hunger: pet.hunger,
+                  mood: pet.mood,
+                  energy: pet.energy,
+                  streak: pet.streak,
+                  stageLabel: '${stage.emoji} ${stage.label}',
+                  height: 280,
                 ),
                 const SizedBox(height: 14),
                 // ── 단계 라벨 ──
