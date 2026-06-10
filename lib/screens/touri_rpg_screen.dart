@@ -50,7 +50,7 @@ class _TouriRpgScreenState extends State<TouriRpgScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFA8D5A2),
+      backgroundColor: const Color(0xFFFADDE2), // 핑크풍 마을
       appBar: const TouriAppBar(
         title: '토우리 마을 🏠',
         subtitle: '같이 산책하자',

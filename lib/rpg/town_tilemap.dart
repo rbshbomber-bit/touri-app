@@ -85,23 +85,24 @@ class TownTilemapComponent extends Component with HasGameReference {
     priority = 0;
   }
 
-  static const _grass = Color(0xFFA8D5A2);
-  static const _grassDark = Color(0xFF8FBE89);
-  static const _grassDot = Color(0xFF7AA875);
-  static const _path = Color(0xFFE6CFA5);
-  static const _pathDark = Color(0xFFD0B886);
-  static const _treeTrunk = Color(0xFF7E5A3C);
-  static const _treeLeaf = Color(0xFF4F8A4A);
-  static const _treeLeafLight = Color(0xFF74A86E);
-  static const _houseWall = Color(0xFFFFE9EF);
-  static const _houseRoof = Color(0xFFE8A0B5);
-  static const _houseDoor = Color(0xFF8B5A6E);
-  static const _flowerPink = Color(0xFFFBA5C0);
-  static const _flowerCenter = Color(0xFFFCE783);
-  static const _signWood = Color(0xFF9C7654);
-  static const _wellStone = Color(0xFF9C9CA8);
-  static const _wellWater = Color(0xFF6FA9C8);
-  static const _benchWood = Color(0xFFB58860);
+  // 🌸 핑크풍 토우리 마을 — 벚꽃 분위기로 통일
+  static const _grass = Color(0xFFFADDE2);       // 연분홍 풀밭
+  static const _grassDark = Color(0xFFF0BACD);   // 분홍 풀잎
+  static const _grassDot = Color(0xFFE89BAA);    // 진분홍 풀잎
+  static const _path = Color(0xFFFFF0E8);        // 크림핑크 길
+  static const _pathDark = Color(0xFFE8C8C8);    // 핑크 베이지 가장자리
+  static const _treeTrunk = Color(0xFF8B6B6B);   // 핑크 갈색 트렁크
+  static const _treeLeaf = Color(0xFFE89BAA);    // 벚꽃 분홍 (잎 대신)
+  static const _treeLeafLight = Color(0xFFF8CCDC); // 연한 벚꽃
+  static const _houseWall = Color(0xFFFFF8FB);   // 더 화이트핑크
+  static const _houseRoof = Color(0xFFE8A0B5);   // 핑크 지붕
+  static const _houseDoor = Color(0xFF8B5A6E);   // 다크 핑크 문
+  static const _flowerPink = Color(0xFFFB7CA0);  // 더 강한 분홍 꽃
+  static const _flowerCenter = Color(0xFFFFE066); // 노랑 꽃 중심
+  static const _signWood = Color(0xFFB58880);    // 핑크 갈색 표지판
+  static const _wellStone = Color(0xFFD0A8B8);   // 핑크 회색 우물
+  static const _wellWater = Color(0xFFA8C8E0);   // 연한 파랑 (대비)
+  static const _benchWood = Color(0xFFC8A0A0);   // 핑크 갈색 벤치
 
   @override
   void render(Canvas canvas) {
@@ -189,10 +190,19 @@ class TownTilemapComponent extends Component with HasGameReference {
     canvas.drawOval(Rect.fromLTWH(x + 4, y + 4, 24, 20), leaf);
     canvas.drawOval(Rect.fromLTWH(x + 6, y + 5, 8, 6), leafLight);
     canvas.drawOval(Rect.fromLTWH(x + 18, y + 6, 6, 5), leafLight);
-    // 잎 사이 작은 그림자 점
+    // 벚꽃 잎 떨어지는 작은 분홍 점 (그림자 대신)
     canvas.drawRect(
       Rect.fromLTWH(x + 14, y + 14, 2, 2),
-      Paint()..color = const Color(0xFF3C6B3A),
+      Paint()..color = const Color(0xFFFB7CA0),
+    );
+    // 벚꽃 잎 추가 (떨어지는 느낌)
+    canvas.drawRect(
+      Rect.fromLTWH(x + 6, y + 22, 1, 1),
+      Paint()..color = const Color(0xFFFCBED1),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(x + 24, y + 24, 1, 1),
+      Paint()..color = const Color(0xFFFCBED1),
     );
   }
 

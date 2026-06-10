@@ -28,7 +28,7 @@ class TouriRpgGame extends FlameGame
   TouriPlayer get player => _player;
 
   @override
-  Color backgroundColor() => const Color(0xFFA8D5A2);
+  Color backgroundColor() => const Color(0xFFFADDE2); // 핑크풍 풀밭 톤
 
   @override
   Future<void> onLoad() async {
