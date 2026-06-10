@@ -35,6 +35,10 @@ class TouriFlameGame extends FlameGame with TapCallbacks {
   @override
   Future<void> onLoad() async {
     super.onLoad();
+    // Flame이 sprite를 'assets/images/' 기본 prefix로 찾는데
+    // 우리는 'assets/character/pet/'이라 prefix를 비워서 전체 경로 직접 사용
+    images.prefix = '';
+
     // 배경 — 하늘
     _sky = _SkyBackground();
     add(_sky);
@@ -117,13 +121,15 @@ class _TouriCharacter extends PositionComponent with HasGameReference<TouriFlame
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    // 4프레임 sprite 애니메이션
+    // 4프레임 sprite 애니메이션 — game.images로 로드 (prefix='' 설정됨)
     final frames = await Future.wait(
       stage.spriteFramePaths.map((p) async {
         try {
-          return await Sprite.load(p.replaceFirst('assets/', ''));
+          final img = await game.images.load(p);
+          return Sprite(img);
         } catch (_) {
-          return await Sprite.load(stage.imagePath.replaceFirst('assets/', ''));
+          final img = await game.images.load(stage.imagePath);
+          return Sprite(img);
         }
       }),
     );
