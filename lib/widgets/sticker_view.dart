@@ -23,10 +23,12 @@ class StickerView extends StatefulWidget {
   State<StickerView> createState() => _StickerViewState();
 }
 
-class _StickerViewState extends State<StickerView> {
+class _StickerViewState extends State<StickerView>
+    with SingleTickerProviderStateMixin {
   static const _baseSize = 96.0;
 
   bool _selected = false;
+  late final AnimationController _popController;
   late double _dx;
   late double _dy;
   late double _scale;
@@ -41,7 +43,17 @@ class _StickerViewState extends State<StickerView> {
   @override
   void initState() {
     super.initState();
+    _popController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 360),
+    )..forward();
     _sync(widget.sticker);
+  }
+
+  @override
+  void dispose() {
+    _popController.dispose();
+    super.dispose();
   }
 
   @override
@@ -92,29 +104,38 @@ class _StickerViewState extends State<StickerView> {
   @override
   Widget build(BuildContext context) {
     final size = _baseSize * _scale;
-    final core = Transform.rotate(
-      angle: _rotation,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: _selected && widget.interactive ? TouriColors.touriPink : Colors.white,
-            width: 3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: TouriColors.touriPink.withOpacity(0.18),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+    final core = AnimatedBuilder(
+      animation: _popController,
+      builder: (context, _) {
+        final pop = Curves.elasticOut.transform(_popController.value);
+        return Transform.scale(
+          scale: 0.72 + 0.28 * pop,
+          child: Transform.rotate(
+            angle: _rotation,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: _selected && widget.interactive ? TouriColors.touriPink : Colors.white,
+                  width: 3,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: TouriColors.touriPink.withOpacity(0.18),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.asset(widget.sticker.sourcePath, fit: BoxFit.cover),
             ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Image.asset(widget.sticker.sourcePath, fit: BoxFit.cover),
-      ),
+          ),
+        );
+      },
     );
 
     return Positioned(

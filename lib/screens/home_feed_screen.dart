@@ -7,6 +7,7 @@ import '../services/touri_storage.dart';
 import '../services/checklist_service.dart';
 import '../widgets/spirituality/affirmation_card.dart';
 import '../widgets/pet_status_card.dart';
+import '../widgets/touri_motion.dart';
 import 'manifest_screen.dart';
 import 'spirituality_screen.dart';
 import 'pet_care_screen.dart';
@@ -125,22 +126,25 @@ class _GreetingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: TouriColors.touriPink.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        AnimatedTouriAvatar(
+          float: true,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: TouriColors.touriPink.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset(mood.avatarPath, fit: BoxFit.cover),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: Image.asset(mood.avatarPath, fit: BoxFit.cover),
         ),
         const SizedBox(width: 14),
         Expanded(

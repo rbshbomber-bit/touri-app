@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/touri_colors.dart';
 import '../services/touri_storage.dart';
+import '../widgets/touri_motion.dart';
 import 'diary_screen.dart';
 import 'collection_screen.dart';
 import 'sticker_store_screen.dart';
@@ -10,6 +11,7 @@ import 'spirituality_screen.dart';
 import 'news_screen.dart';
 import 'auth_sheet.dart';
 import 'pet_care_screen.dart';
+import 'pixel_touri_lab_screen.dart';
 
 /// 메뉴 — 3열 그리드 9개 진입점. 각 카드 토우리 이미지 + 라벨.
 class MenuScreen extends StatefulWidget {
@@ -100,6 +102,12 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  void _openPixelLab() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PixelTouriLabScreen()),
+    );
+  }
+
   void _openNews() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const NewsScreen()),
@@ -126,7 +134,7 @@ class _MenuScreenState extends State<MenuScreen> {
       ),
       // 🐰 토우리 키우기 — 새 핵심 기능
       _MenuItem(
-        image: 'assets/character/menu_icons/collection.png',
+        image: 'assets/character/menu_icons/pet_growth.png',
         label: '토우리 키우기',
         accent: TouriColors.touriPink,
         onTap: _openPetCare,
@@ -136,6 +144,13 @@ class _MenuScreenState extends State<MenuScreen> {
         label: '그려줘',
         accent: TouriColors.lilac,
         onTap: () => _openDiary(hintGenerate: true),
+      ),
+      // 🎨 도트 토우리 랩 — touri-pixel LoRA 테스트
+      _MenuItem(
+        image: 'assets/character/menu_icons/generate.png',
+        label: '도트 랩 🎨',
+        accent: TouriColors.bubble,
+        onTap: _openPixelLab,
       ),
       _MenuItem(
         image: 'assets/character/menu_icons/sticker_make.png',
@@ -212,7 +227,10 @@ class _MenuScreenState extends State<MenuScreen> {
                     childAspectRatio: 0.88,
                   ),
                   itemCount: items.length,
-                  itemBuilder: (context, i) => _MenuTile(item: items[i]),
+                  itemBuilder: (context, i) => _MenuTile(
+                    item: items[i],
+                    index: i,
+                  ),
                 ),
               ),
             ],
@@ -236,55 +254,91 @@ class _MenuItem {
   });
 }
 
-class _MenuTile extends StatelessWidget {
+class _MenuTile extends StatefulWidget {
   final _MenuItem item;
-  const _MenuTile({required this.item});
+  final int index;
+  const _MenuTile({required this.item, required this.index});
+
+  @override
+  State<_MenuTile> createState() => _MenuTileState();
+}
+
+class _MenuTileState extends State<_MenuTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _slide = Tween(begin: const Offset(0, 0.10), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    Future.delayed(Duration(milliseconds: 34 * widget.index), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: item.onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: TouriColors.cloudPink, width: 1),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              Expanded(
-                child: Container(
-                  color: item.accent,
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(
+        position: _slide,
+        child: TapBounce(
+          onTap: widget.item.onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: TouriColors.cloudPink, width: 1),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Container(
+                    color: widget.item.accent,
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      widget.item.image,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  color: Colors.white,
                   alignment: Alignment.center,
-                  child: Image.asset(
-                    item.image,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
+                  child: Text(
+                    widget.item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: TouriColors.cocoaDark,
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                color: Colors.white,
-                alignment: Alignment.center,
-                child: Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: TouriColors.cocoaDark,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

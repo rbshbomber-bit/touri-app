@@ -38,7 +38,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Prepare runtime assets (.env, touri_lora_url.txt)
+      - name: Prepare runtime assets (.env, LoRA URLs)
         run: |
           # .env — GitHub Secrets 있으면 사용, 없으면 빈 파일 (fallback 동작)
           {
@@ -50,6 +50,12 @@ jobs:
             echo "${{ secrets.TOURI_LORA_URL }}" > touri_lora_url.txt
           else
             touch touri_lora_url.txt
+          fi
+          # touri_pixel_lora_url.txt — 도트 LoRA URL (touri-pixel 트리거)
+          if [ -n "${{ secrets.TOURI_PIXEL_LORA_URL }}" ]; then
+            echo "${{ secrets.TOURI_PIXEL_LORA_URL }}" > touri_pixel_lora_url.txt
+          else
+            touch touri_pixel_lora_url.txt
           fi
 
       - name: Flutter pub get
@@ -78,7 +84,7 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Prepare runtime assets (.env, touri_lora_url.txt)
+      - name: Prepare runtime assets (.env, LoRA URLs)
         run: |
           # .env — GitHub Secrets 있으면 사용, 없으면 빈 파일 (fallback 동작)
           {
@@ -90,6 +96,12 @@ jobs:
             echo "${{ secrets.TOURI_LORA_URL }}" > touri_lora_url.txt
           else
             touch touri_lora_url.txt
+          fi
+          # touri_pixel_lora_url.txt — 도트 LoRA URL (touri-pixel 트리거)
+          if [ -n "${{ secrets.TOURI_PIXEL_LORA_URL }}" ]; then
+            echo "${{ secrets.TOURI_PIXEL_LORA_URL }}" > touri_pixel_lora_url.txt
+          else
+            touch touri_pixel_lora_url.txt
           fi
 
       - name: Flutter pub get

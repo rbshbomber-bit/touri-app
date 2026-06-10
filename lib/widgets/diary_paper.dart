@@ -4,6 +4,7 @@ import '../theme/touri_theme.dart';
 import '../models/touri_mood.dart';
 import '../models/diary_sticker.dart';
 import 'sticker_view.dart';
+import 'touri_motion.dart';
 
 /// 다이어리 종이. 워시테이프 + 줄간격 + 자유 본문 + 우상단 토우리 + 스티커 레이어.
 class DiaryPaper extends StatefulWidget {
@@ -104,10 +105,13 @@ class _DiaryPaperState extends State<DiaryPaper> {
                     ],
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    widget.mood.imagePath,
-                    fit: BoxFit.cover,
-                    alignment: const Alignment(0, -0.2),
+                  child: AnimatedTouriAvatar(
+                    amplitude: 0.02,
+                    child: Image.asset(
+                      widget.mood.imagePath,
+                      fit: BoxFit.cover,
+                      alignment: const Alignment(0, -0.2),
+                    ),
                   ),
                 ),
               ),
@@ -195,9 +199,103 @@ class _DiaryPaperState extends State<DiaryPaper> {
                   busy: widget.generationBusy,
                 ),
               ),
+
+            if (widget.generationBusy)
+              Positioned(
+                left: 12,
+                bottom: 54,
+                child: _DrawingHint(imagePath: widget.mood.avatarPath),
+              ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DrawingHint extends StatefulWidget {
+  final String imagePath;
+  const _DrawingHint({required this.imagePath});
+
+  @override
+  State<_DrawingHint> createState() => _DrawingHintState();
+}
+
+class _DrawingHintState extends State<_DrawingHint>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 820),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final t = Curves.easeInOut.transform(_controller.value);
+        return Transform.translate(
+          offset: Offset(0, -2 * t),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: TouriColors.cloudPink, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: TouriColors.touriPink.withOpacity(0.16),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipOval(
+                  child: Image.asset(
+                    widget.imagePath,
+                    width: 28,
+                    height: 28,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Transform.rotate(
+                  angle: -0.18 + 0.36 * t,
+                  child: const Icon(
+                    Icons.edit_rounded,
+                    size: 16,
+                    color: TouriColors.touriPink,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                const Text(
+                  '토우리가 그리는 중',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: TouriColors.cocoaDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -40,11 +40,13 @@ class GenerationOrchestrator extends ChangeNotifier {
   /// onReady(localPath)는 완료 시 1회 호출.
   /// 이미 busy면 무시.
   /// 일기·무드로 새 생성. [scene]을 주면 Claude 추출 단계 건너뜀(다시 그리기용).
+  /// [style]로 워터컬러(기본) / 픽셀 도트 선택.
   Future<void> generate({
     required String diary,
     required TouriMood mood,
     required String dateKey,
     String? scene,
+    TouriStyle style = TouriStyle.watercolor,
     required void Function(GenerationStatus, {String? requestId}) onProgress,
     required void Function(String localPath) onReady,
     required void Function(String error) onFailed,
@@ -65,7 +67,34 @@ class GenerationOrchestrator extends ChangeNotifier {
       _setStatus(GenerationStatus.queued);
       onProgress(GenerationStatus.queued);
 
-      final reqId = await _fal.submit(s);
+      final reqId = await _fal.submit(s, style: style);
+      _requestId = reqId;
+      _setStatus(GenerationStatus.generating);
+      onProgress(GenerationStatus.generating, requestId: reqId);
+
+      _startPolling(dateKey, onProgress, onReady, onFailed);
+    } catch (e) {
+      _setStatus(GenerationStatus.failed, error: e.toString());
+      onFailed(e.toString());
+    }
+  }
+
+  /// 픽셀 도트 토우리 빠른 생성 (Claude scene 추출 X, scene 직접 전달).
+  /// 호출 예: pixelGenerate(scene: 'exercising at gym, side view', dateKey: 'pixel_${now}')
+  Future<void> pixelGenerate({
+    required String scene,
+    required String dateKey,
+    required void Function(GenerationStatus, {String? requestId}) onProgress,
+    required void Function(String localPath) onReady,
+    required void Function(String error) onFailed,
+  }) async {
+    if (isBusy) return;
+    try {
+      _lastScene = scene;
+      _setStatus(GenerationStatus.queued);
+      onProgress(GenerationStatus.queued);
+
+      final reqId = await _fal.submit(scene, style: TouriStyle.pixel);
       _requestId = reqId;
       _setStatus(GenerationStatus.generating);
       onProgress(GenerationStatus.generating, requestId: reqId);

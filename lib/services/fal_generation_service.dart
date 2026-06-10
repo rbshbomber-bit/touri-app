@@ -5,18 +5,49 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
+/// 토우리 스타일 — 워터컬러 (기본) vs 픽셀 도트 (touri-pixel LoRA)
+enum TouriStyle {
+  watercolor,
+  pixel,
+}
+
+class _StyleConfig {
+  final String trigger;
+  final String styleSuffix;
+  final String loraAssetPath;
+  const _StyleConfig({
+    required this.trigger,
+    required this.styleSuffix,
+    required this.loraAssetPath,
+  });
+}
+
+const Map<TouriStyle, _StyleConfig> _styleConfigs = {
+  TouriStyle.watercolor: _StyleConfig(
+    trigger: 'touri-bunny',
+    styleSuffix:
+        'kawaii watercolor illustration, soft pastel pink color palette, cute cozy style',
+    loraAssetPath: 'touri_lora_url.txt',
+  ),
+  TouriStyle.pixel: _StyleConfig(
+    trigger: 'touri-pixel',
+    styleSuffix:
+        '32-bit pixel art, retro tamagotchi style, soft pink and lilac dot art, kawaii bunny, big round eyes, fluffy cheek tufts, dashed outline, cream background',
+    loraAssetPath: 'touri_pixel_lora_url.txt',
+  ),
+};
+
 /// FAL queue REST 클라이언트.
 /// - submit() → request_id
 /// - pollStatus() → in_queue / in_progress / completed / failed
 /// - fetchResult() → image url
 /// - download() → 로컬 PNG 경로
+///
+/// 스타일 두 가지 지원: TouriStyle.watercolor (기본) / TouriStyle.pixel (도트)
 class FalGenerationService {
   static const _model = 'fal-ai/flux-lora';
-  static const _trigger = 'touri-bunny';
-  static const _styleSuffix =
-      'kawaii watercolor illustration, soft pastel pink color palette, cute cozy style';
 
-  String? _cachedLoraUrl;
+  final Map<TouriStyle, String> _cachedLoraUrls = {};
 
   String? get _apiKey {
     try {
@@ -30,33 +61,42 @@ class FalGenerationService {
 
   bool get hasKey => _apiKey != null;
 
-  Future<String?> _getLoraUrl() async {
-    if (_cachedLoraUrl != null) return _cachedLoraUrl;
+  Future<String?> _getLoraUrl(TouriStyle style) async {
+    if (_cachedLoraUrls.containsKey(style)) return _cachedLoraUrls[style];
     try {
-      final raw = await rootBundle.loadString('touri_lora_url.txt');
+      final cfg = _styleConfigs[style]!;
+      final raw = await rootBundle.loadString(cfg.loraAssetPath);
       final url = raw.trim();
       if (url.isEmpty) return null;
-      _cachedLoraUrl = url;
+      _cachedLoraUrls[style] = url;
       return url;
     } catch (_) {
       return null;
     }
   }
 
-  String buildPrompt(String scene) {
-    return '$_trigger, ${scene.trim()}, $_styleSuffix';
+  String buildPrompt(String scene, {TouriStyle style = TouriStyle.watercolor}) {
+    final cfg = _styleConfigs[style]!;
+    return '${cfg.trigger}, ${scene.trim()}, ${cfg.styleSuffix}';
   }
 
   /// FAL 큐에 제출. 성공 시 request_id 반환.
-  Future<String> submit(String scene) async {
+  /// [style]로 워터컬러/픽셀 스타일 선택.
+  Future<String> submit(String scene, {TouriStyle style = TouriStyle.watercolor}) async {
     final key = _apiKey;
     if (key == null) {
       throw FalException('FAL_KEY가 없어. .env에 FAL_KEY 추가해줘.');
     }
-    final loraUrl = await _getLoraUrl();
+    final loraUrl = await _getLoraUrl(style);
     if (loraUrl == null) {
-      throw FalException('LoRA URL이 없어. scripts/train_touri_lora.py 먼저 돌려야 해.');
+      final scriptName = style == TouriStyle.pixel
+          ? 'scripts/train_touri_pixel_lora.py'
+          : 'scripts/train_touri_lora.py';
+      throw FalException('LoRA URL이 없어. $scriptName 먼저 돌려야 해.');
     }
+
+    // 픽셀 스타일은 step 적게 + scale 살짝 높여서 도트감 강조
+    final isPixel = style == TouriStyle.pixel;
 
     final res = await http.post(
       Uri.parse('https://queue.fal.run/$_model'),
@@ -65,12 +105,12 @@ class FalGenerationService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'prompt': buildPrompt(scene),
+        'prompt': buildPrompt(scene, style: style),
         'loras': [
-          {'path': loraUrl, 'scale': 1.0},
+          {'path': loraUrl, 'scale': isPixel ? 1.1 : 1.0},
         ],
-        'num_inference_steps': 28,
-        'guidance_scale': 3.5,
+        'num_inference_steps': isPixel ? 24 : 28,
+        'guidance_scale': isPixel ? 4.0 : 3.5,
         'num_images': 1,
         'image_size': 'square_hd',
         'enable_safety_checker': true,
