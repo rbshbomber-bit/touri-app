@@ -155,9 +155,9 @@ class _MenuScreenState extends State<MenuScreen> {
         accent: TouriColors.cloudPink,
         onTap: () => _openDiary(),
       ),
-      // 🐰 토우리 키우기 — 새 핵심 기능
+      // 🐰 토우리 키우기 — 새 핵심 기능 (v2: 한 귀 처짐 시그니처)
       _MenuItem(
-        image: 'assets/character/menu_icons/pet_growth.png',
+        image: 'assets/character/menu_icons/pet_growth_v2.png',
         label: '토우리 키우기',
         accent: TouriColors.touriPink,
         onTap: _openPetCare,
