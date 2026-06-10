@@ -45,3 +45,4 @@ flutter:
     - assets/character/pet/
     - .env
     - touri_lora_url.txt
+    - touri_pixel_lora_url.txt
