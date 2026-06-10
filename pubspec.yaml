@@ -43,6 +43,7 @@ flutter:
     - assets/character/packs/autumn/
     - assets/character/packs/valentine/
     - assets/character/pet/
+    - assets/character/rpg_sprites/
     - .env
     - touri_lora_url.txt
     - touri_pixel_lora_url.txt

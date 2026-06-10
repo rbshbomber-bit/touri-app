@@ -12,6 +12,7 @@ import 'news_screen.dart';
 import 'auth_sheet.dart';
 import 'pet_care_screen.dart';
 import 'pixel_touri_lab_screen.dart';
+import 'touri_rpg_screen.dart';
 
 /// 메뉴 — 3열 그리드 9개 진입점. 각 카드 토우리 이미지 + 라벨.
 class MenuScreen extends StatefulWidget {
@@ -108,6 +109,12 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  void _openRpg() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const TouriRpgScreen()),
+    );
+  }
+
   void _openNews() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const NewsScreen()),
@@ -138,6 +145,13 @@ class _MenuScreenState extends State<MenuScreen> {
         label: '토우리 키우기',
         accent: TouriColors.touriPink,
         onTap: _openPetCare,
+      ),
+      // 🏠 토우리 마을 — RPG (포켓몬 도트 + 모던 UI)
+      _MenuItem(
+        image: 'assets/character/menu_icons/pet_growth.png',
+        label: '토우리 마을 🏠',
+        accent: TouriColors.lilac,
+        onTap: _openRpg,
       ),
       _MenuItem(
         image: 'assets/character/menu_icons/generate.png',
