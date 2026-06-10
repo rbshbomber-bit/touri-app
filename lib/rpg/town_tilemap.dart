@@ -63,7 +63,7 @@ class TownMap {
       case TileType.tree:
         return '🌳 시원한 그늘이 있어. 잠깐 쉬어갈까?';
       case TileType.house:
-        return '🏠 집에 들어갈래?\n사랑 +1';
+        return '🏠 우리 집에 들어갈까?\n방으로 돌아가기 ♡';
       case TileType.flower:
         return '🌸 분홍 꽃을 한 송이 땄어. 행복 +1';
       case TileType.sign:

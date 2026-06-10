@@ -44,7 +44,14 @@ class _TouriRpgScreenState extends State<TouriRpgScreen> {
   }
 
   void _dismissDialog() {
-    if (mounted) setState(() => _dialogText = null);
+    if (mounted) {
+      // 집 옆 다이얼로그 닫으면 → 방(PetCareScreen)으로 복귀
+      final wasGoingHome = _dialogText?.contains('방으로 돌아가기') ?? false;
+      setState(() => _dialogText = null);
+      if (wasGoingHome && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   @override

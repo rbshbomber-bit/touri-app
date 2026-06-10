@@ -8,6 +8,9 @@ import '../widgets/touri_app_bar.dart';
 import '../widgets/touri_motion.dart';
 import '../widgets/touri_game_scene.dart';
 import '../games/touri_flame_game.dart';
+import '../games/touri_room_game.dart';
+import '../rpg/widgets/touri_dialog.dart';
+import 'touri_rpg_screen.dart';
 
 /// 토우리 돌보기. 큰 토우리 + 능력치 + 일일 액션 3개 + 진화 컷씬.
 class PetCareScreen extends StatefulWidget {
@@ -22,6 +25,36 @@ class _PetCareScreenState extends State<PetCareScreen> {
   String _reactionSymbol = '♡';
   Color _reactionColor = TouriColors.touriPink;
   int _strawberriesEaten = 0;
+  String? _roomDialogText;
+
+  /// 방 가구 상호작용 → 능력치 + 다이얼로그
+  void _onRoomInteract(String text) {
+    // 능력치 부스트 (텍스트 파싱)
+    if (text.contains('에너지 +2')) {
+      PetService.instance.reward(PetStat.focus, amount: 2, source: '🛏️ 침대 휴식');
+    } else if (text.contains('사랑 +2')) {
+      PetService.instance.reward(PetStat.love, amount: 2, source: '🍽️ 식탁');
+    } else if (text.contains('반짝임 +2')) {
+      PetService.instance.reward(PetStat.sparkle, amount: 2, source: '🪞 거울');
+    } else if (text.contains('집중 +2')) {
+      PetService.instance.reward(PetStat.focus, amount: 2, source: '📚 책장');
+    } else if (text.contains('사랑 +1') && text.contains('반짝임 +1')) {
+      PetService.instance.reward(PetStat.love, amount: 1, source: '🧸 장난감');
+      PetService.instance.reward(PetStat.sparkle, amount: 1, source: '🧸 장난감');
+    }
+    setState(() {
+      _roomDialogText = text;
+      _reactionTrigger++;
+      _reactionSymbol = '♡';
+    });
+  }
+
+  void _onDoorEnter() {
+    // 마을로 이동
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const TouriRpgScreen()),
+    );
+  }
 
   void _onStrawberryEaten(int total) {
     setState(() {
@@ -72,12 +105,21 @@ class _PetCareScreenState extends State<PetCareScreen> {
                   ),
                   child: Stack(
                     children: [
+                      // 🏠 토우리 방 (마을과 동일 비주얼, 이동 제한)
                       GameWidget.controlled(
-                        gameFactory: () => TouriFlameGame(
+                        gameFactory: () => TouriRoomGame(
                           stage: stage,
-                          onStrawberryEaten: _onStrawberryEaten,
+                          onInteract: _onRoomInteract,
+                          onDoorEnter: _onDoorEnter,
                         ),
                       ),
+                      // 가구 상호작용 다이얼로그 (방 안)
+                      if (_roomDialogText != null)
+                        TouriDialog(
+                          text: _roomDialogText!,
+                          onDismiss: () =>
+                              setState(() => _roomDialogText = null),
+                        ),
                       // 좌상단 단계 라벨 (HUD)
                       Positioned(
                         left: 12,
