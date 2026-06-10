@@ -146,12 +146,56 @@ class _TouriGameSceneState extends State<TouriGameScene>
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
-            final touriSize = math.min(w * 0.42, 140.0);
-            final floorY = h - 60; // 풀바닥 위치
+            // 토우리 더 크게 — 0.42 → 0.55 + max 180
+            final touriSize = math.min(w * 0.55, 180.0);
             return Stack(
               children: [
-                // ── 배경: 픽셀 별 점들 ──
+                // ── 배경: 무지개 (멀리) ──
+                Positioned(
+                  top: 14,
+                  right: 24,
+                  child: CustomPaint(
+                    size: const Size(110, 55),
+                    painter: _RainbowPainter(),
+                  ),
+                ),
+                // ── 구름 2개 (좌상단/우상단) ──
+                Positioned(
+                  top: 30,
+                  left: 18,
+                  child: CustomPaint(
+                    size: const Size(70, 28),
+                    painter: _CloudPainter(),
+                  ),
+                ),
+                Positioned(
+                  top: 72,
+                  left: 120,
+                  child: CustomPaint(
+                    size: const Size(50, 20),
+                    painter: _CloudPainter(opacity: 0.7),
+                  ),
+                ),
+                // ── 배경 픽셀 별 점들 (30개로 증량) ──
                 _PixelStars(rng: _rng),
+                // ── 좌측 픽셀 나무 ──
+                Positioned(
+                  left: 6,
+                  bottom: 56,
+                  child: CustomPaint(
+                    size: const Size(40, 80),
+                    painter: _PixelTreePainter(),
+                  ),
+                ),
+                // ── 우측 작은 분홍 꽃 ──
+                Positioned(
+                  right: 24,
+                  bottom: 58,
+                  child: CustomPaint(
+                    size: const Size(28, 32),
+                    painter: _PixelFlowerPainter(),
+                  ),
+                ),
                 // ── 풀바닥 (픽셀 잔디 패턴) ──
                 Positioned(
                   left: 0,
@@ -391,7 +435,7 @@ class _BlinkTextState extends State<_BlinkText>
   }
 }
 
-/// 배경 픽셀 별 — 8x8 픽셀 도트 18개 랜덤 배치 (static)
+/// 배경 픽셀 별 — 8x8 픽셀 도트 30개 랜덤 배치 (static, seeded)
 class _PixelStars extends StatelessWidget {
   final math.Random rng;
   const _PixelStars({required this.rng});
@@ -399,26 +443,167 @@ class _PixelStars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, c) {
-      final dots = List.generate(18, (i) {
-        final x = rng.nextDouble() * c.maxWidth;
-        final y = rng.nextDouble() * (c.maxHeight * 0.55);
-        final s = 2.0 + rng.nextInt(3); // 2-4px
+      final seeded = math.Random(7);
+      final dots = List.generate(30, (i) {
+        final x = seeded.nextDouble() * c.maxWidth;
+        final y = seeded.nextDouble() * (c.maxHeight * 0.65);
+        final s = 2.0 + seeded.nextInt(4); // 2-5px
         final colors = [
-          Colors.white.withOpacity(0.8),
-          TouriColors.lavender.withOpacity(0.7),
-          TouriColors.touriPink.withOpacity(0.55),
+          Colors.white.withOpacity(0.9),
+          const Color(0xFFFFE066).withOpacity(0.85), // 노랑 별
+          TouriColors.lavender.withOpacity(0.75),
+          TouriColors.touriPink.withOpacity(0.65),
         ];
         return Positioned(
           left: x,
           top: y,
           width: s,
           height: s,
-          child: Container(color: colors[i % 3]),
+          child: Container(color: colors[i % 4]),
         );
       });
       return Stack(children: dots);
     });
   }
+}
+
+/// 픽셀 구름 — 작은 사각형 모음
+class _CloudPainter extends CustomPainter {
+  final double opacity;
+  _CloudPainter({this.opacity = 1.0});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..color = Colors.white.withOpacity(opacity);
+    final cell = size.height / 4;
+    // 구름 모양 (4행 패턴)
+    final pattern = [
+      [0,0,1,1,1,1,0,0,0,0],
+      [0,1,1,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,1,1,1,1],
+      [0,1,1,1,1,1,1,1,1,0],
+    ];
+    for (int r = 0; r < pattern.length; r++) {
+      for (int c = 0; c < pattern[r].length; c++) {
+        if (pattern[r][c] == 1) {
+          canvas.drawRect(
+            Rect.fromLTWH(c * cell, r * cell, cell, cell),
+            p,
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// 픽셀 무지개 — 7색 아치
+class _RainbowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final colors = [
+      const Color(0xFFFF8B94),  // 분홍
+      const Color(0xFFFFBE76),  // 주황
+      const Color(0xFFFFE066),  // 노랑
+      const Color(0xFFB5D89A),  // 연두
+      const Color(0xFF8FCFD8),  // 하늘
+      const Color(0xFFB8A1E0),  // 라일락
+    ];
+    final stroke = 4.0;
+    final cx = size.width / 2;
+    final cy = size.height;
+    for (int i = 0; i < colors.length; i++) {
+      final paint = Paint()
+        ..color = colors[i]
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke;
+      final r = size.width / 2 - i * stroke - 2;
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset(cx, cy), radius: r),
+        math.pi,
+        math.pi,
+        false,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// 좌측 픽셀 나무 (분홍 잎)
+class _PixelTreePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final trunk = Paint()..color = const Color(0xFF8B6F47);
+    final leafDark = Paint()..color = const Color(0xFFED93B1);
+    final leafLight = Paint()..color = const Color(0xFFF4C0D1);
+    final cell = size.width / 10;
+
+    // 줄기
+    for (double y = size.height * 0.55; y < size.height; y += cell) {
+      canvas.drawRect(Rect.fromLTWH(size.width * 0.4, y, cell * 2, cell), trunk);
+    }
+    // 잎 (구름처럼 둥근 윗부분)
+    final leafPattern = [
+      [0,0,1,1,1,1,0,0,0,0],
+      [0,1,2,2,2,2,1,0,0,0],
+      [1,2,2,2,2,2,2,1,0,0],
+      [1,2,2,1,2,2,2,1,0,0],
+      [0,1,2,2,2,1,0,0,0,0],
+    ];
+    for (int r = 0; r < leafPattern.length; r++) {
+      for (int c = 0; c < leafPattern[r].length; c++) {
+        if (leafPattern[r][c] == 1) {
+          canvas.drawRect(Rect.fromLTWH(c * cell, r * cell, cell, cell), leafDark);
+        } else if (leafPattern[r][c] == 2) {
+          canvas.drawRect(Rect.fromLTWH(c * cell, r * cell, cell, cell), leafLight);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// 우측 픽셀 분홍 꽃
+class _PixelFlowerPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stem = Paint()..color = const Color(0xFF8FAE5E);
+    final petal = Paint()..color = const Color(0xFFED93B1);
+    final center = Paint()..color = const Color(0xFFFFE066);
+    final cell = size.width / 7;
+
+    // 꽃잎 + 중심
+    final pattern = [
+      [0,1,1,0,1,1,0],
+      [1,1,1,2,1,1,1],
+      [0,1,1,1,1,1,0],
+      [0,0,3,0,0,0,0],
+      [0,0,3,3,0,0,0],
+      [0,0,3,0,3,0,0],
+    ];
+    for (int r = 0; r < pattern.length; r++) {
+      for (int c = 0; c < pattern[r].length; c++) {
+        final v = pattern[r][c];
+        if (v == 1) {
+          canvas.drawRect(Rect.fromLTWH(c * cell, r * cell, cell, cell), petal);
+        } else if (v == 2) {
+          canvas.drawRect(Rect.fromLTWH(c * cell, r * cell, cell, cell), center);
+        } else if (v == 3) {
+          canvas.drawRect(Rect.fromLTWH(c * cell, r * cell, cell, cell), stem);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// 픽셀 잔디 페인터 — 작은 사각형 패턴 (다마고치 마룻바닥 느낌)
