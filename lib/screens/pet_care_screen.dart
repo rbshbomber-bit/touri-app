@@ -21,6 +21,24 @@ class _PetCareScreenState extends State<PetCareScreen> {
   int _reactionTrigger = 0;
   String _reactionSymbol = '♡';
   Color _reactionColor = TouriColors.touriPink;
+  int _strawberriesEaten = 0;
+
+  void _onStrawberryEaten(int total) {
+    setState(() {
+      _strawberriesEaten = total;
+      _reactionTrigger++;
+      _reactionSymbol = '🍓';
+      _reactionColor = const Color(0xFFE54D6F);
+    });
+    // 매 5개마다 토우리에 사랑 +2 (보너스)
+    if (total > 0 && total % 5 == 0) {
+      PetService.instance.reward(
+        PetStat.love,
+        amount: 2,
+        source: '딸기 5개 받기 🍓',
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +73,10 @@ class _PetCareScreenState extends State<PetCareScreen> {
                   child: Stack(
                     children: [
                       GameWidget.controlled(
-                        gameFactory: () => TouriFlameGame(stage: stage),
+                        gameFactory: () => TouriFlameGame(
+                          stage: stage,
+                          onStrawberryEaten: _onStrawberryEaten,
+                        ),
                       ),
                       // 좌상단 단계 라벨 (HUD)
                       Positioned(
@@ -73,6 +94,28 @@ class _PetCareScreenState extends State<PetCareScreen> {
                         child: _HudChip(
                           text: '🔥 ${pet.streak}d',
                           fg: TouriColors.cocoaDark,
+                        ),
+                      ),
+                      // 우측 중간 딸기 카운터 (먹은 게 있을 때만)
+                      if (_strawberriesEaten > 0)
+                        Positioned(
+                          right: 12,
+                          top: 48,
+                          child: _HudChip(
+                            text: '🍓 $_strawberriesEaten',
+                            fg: const Color(0xFFE54D6F),
+                          ),
+                        ),
+                      // 하단 안내 (5초 후 자동으로 사라지지 않음 — 항상 표시)
+                      Positioned(
+                        left: 12,
+                        right: 12,
+                        bottom: 12,
+                        child: Center(
+                          child: _HudChip(
+                            text: '풀바닥 탭 → 딸기 🍓',
+                            fg: const Color(0xFF7B5FB8),
+                          ),
                         ),
                       ),
                     ],

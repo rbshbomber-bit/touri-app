@@ -9,12 +9,13 @@ import 'package:flutter/material.dart';
 
 import '../models/growth_stage.dart';
 
-/// Day 1 — 토우리 Flame 게임 화면 (기본).
-/// 토우리가 자체 의지로 좌우 걷고 가끔 점프 + 탭하면 폴짝.
-/// 다음 단계: 미니게임 (딸기 던지기, 별가루 모으기).
+/// Day 2 — 토우리 Flame 게임 + 딸기 던지기 미니게임.
+/// 빈 풀바닥 탭 → 딸기 떨어짐 (gravity), 토우리가 가장 가까운 딸기 추적해서 받아먹음.
+/// 5개 먹으면 보너스 ✨ (onStrawberryEaten 콜백 호출 — PetService 연동).
 class TouriFlameGame extends FlameGame with TapCallbacks {
   final GrowthStage stage;
   final void Function()? onTouriTap;
+  final void Function(int totalEaten)? onStrawberryEaten;
 
   late _SkyBackground _sky;
   late _GrassFloor _floor;
@@ -23,10 +24,14 @@ class TouriFlameGame extends FlameGame with TapCallbacks {
   late _Tree _tree;
   final List<_TwinkleStar> _stars = [];
   final List<_Cloud> _clouds = [];
+  final List<_Strawberry> _strawberries = [];
+
+  int strawberriesEaten = 0;
 
   TouriFlameGame({
     required this.stage,
     this.onTouriTap,
+    this.onStrawberryEaten,
   });
 
   @override
@@ -85,15 +90,60 @@ class TouriFlameGame extends FlameGame with TapCallbacks {
   @override
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
-    // 토우리 위치 근처면 직접 폴짝, 아니면 그쪽으로 걸어가기
     final tapPos = event.localPosition;
     final touriPos = _touri.position;
     final dist = (tapPos - touriPos).length;
-    if (dist < 80) {
+    final isOnFloor = tapPos.y > size.y * 0.6; // 화면 아래쪽 60% 영역
+
+    if (dist < 60) {
+      // 토우리 바로 탭 → 폴짝
       _touri.tapped();
       onTouriTap?.call();
+    } else if (isOnFloor && _strawberries.length < 8) {
+      // 빈 풀바닥 탭 → 딸기 떨어뜨림 (최대 8개 동시)
+      final s = _Strawberry(spawnX: tapPos.x, spawnY: math.max(0, tapPos.y - 80))..priority = 9;
+      _strawberries.add(s);
+      add(s);
     } else {
+      // 머리 위 탭 → 토우리가 그쪽으로
       _touri.walkTo(tapPos.x);
+    }
+  }
+
+  /// 토우리가 딸기 먹었을 때 호출됨 (충돌 처리)
+  void _onStrawberryEaten(_Strawberry s) {
+    s.removeFromParent();
+    _strawberries.remove(s);
+    strawberriesEaten++;
+    onStrawberryEaten?.call(strawberriesEaten);
+  }
+
+  /// 토우리에 가장 가까운 딸기 위치 (없으면 null)
+  Vector2? get nearestStrawberryPos {
+    if (_strawberries.isEmpty) return null;
+    _Strawberry? nearest;
+    double minDist = double.infinity;
+    for (final s in _strawberries) {
+      if (!s.isReady) continue; // 땅에 닿은 거만 추적
+      final d = (s.position - _touri.position).length;
+      if (d < minDist) {
+        minDist = d;
+        nearest = s;
+      }
+    }
+    return nearest?.position;
+  }
+
+  /// 충돌 체크 — 토우리 위치 vs 딸기들
+  void _checkCollisions() {
+    final touriPos = _touri.position;
+    for (final s in List.of(_strawberries)) {
+      if (!s.isReady) continue;
+      final d = (s.position - touriPos).length;
+      if (d < 36) {
+        _onStrawberryEaten(s);
+        _touri.celebrate();
+      }
     }
   }
 }
@@ -165,22 +215,35 @@ class _TouriCharacter extends PositionComponent with HasGameReference<TouriFlame
     }
   }
 
+  void celebrate() {
+    // 딸기 먹고 기뻐서 폴짝
+    tapped();
+  }
+
   @override
   void update(double dt) {
     super.update(dt);
 
-    // 자동 행동 — 가끔 새 위치로 걷거나 점프
-    _nextActionAt -= dt;
-    if (_nextActionAt <= 0) {
-      if (_rng.nextDouble() < 0.7) {
-        // 70% 걷기
-        final w = game.size.x;
-        walkTo(50 + _rng.nextDouble() * (w - 100));
-      } else {
-        // 30% 점프
-        tapped();
+    // 충돌 체크 (매 프레임 — 가벼움)
+    game._checkCollisions();
+
+    // 딸기가 있으면 가장 가까운 거 추적 (우선순위 ↑)
+    final strawberry = game.nearestStrawberryPos;
+    if (strawberry != null) {
+      walkTo(strawberry.x);
+      _nextActionAt = 1.0; // 자동 행동 잠시 중단
+    } else {
+      // 자동 행동 — 가끔 새 위치로 걷거나 점프
+      _nextActionAt -= dt;
+      if (_nextActionAt <= 0) {
+        if (_rng.nextDouble() < 0.7) {
+          final w = game.size.x;
+          walkTo(50 + _rng.nextDouble() * (w - 100));
+        } else {
+          tapped();
+        }
+        _scheduleNextAction();
       }
-      _scheduleNextAction();
     }
 
     // 목표 위치로 부드럽게 이동
@@ -396,6 +459,77 @@ class _Tree extends Component with HasGameReference<TouriFlameGame> {
         }
       }
     }
+  }
+}
+
+// ─── 딸기 (미니게임 Day 2) ──────────────────────
+class _Strawberry extends PositionComponent {
+  final double spawnX;
+  final double spawnY;
+  double _vy = 0;
+  bool _onFloor = false;
+  bool get isReady => _onFloor;
+  double _bounceTimer = 0;
+
+  _Strawberry({required this.spawnX, required this.spawnY}) {
+    position = Vector2(spawnX, spawnY);
+    size = Vector2(28, 32);
+    anchor = Anchor.center;
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final game = parent as TouriFlameGame;
+    final floorY = game.size.y - 50;
+
+    if (!_onFloor) {
+      // 자유 낙하
+      _vy += 480 * dt; // gravity
+      position.y += _vy * dt;
+      if (position.y >= floorY) {
+        position.y = floorY;
+        _vy = -_vy * 0.4; // 통통 튐
+        if (_vy.abs() < 30) {
+          _vy = 0;
+          _onFloor = true;
+        }
+      }
+    } else {
+      // 살짝 꿀렁
+      _bounceTimer += dt;
+    }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final w = size.x;
+    final h = size.y;
+    // 잎 (위) — 초록
+    final leaf = Paint()..color = const Color(0xFF8FAE5E);
+    canvas.drawOval(Rect.fromLTWH(w*0.15, 0, w*0.7, h*0.25), leaf);
+    canvas.drawOval(Rect.fromLTWH(w*0.05, h*0.05, w*0.4, h*0.18), leaf);
+    canvas.drawOval(Rect.fromLTWH(w*0.55, h*0.05, w*0.4, h*0.18), leaf);
+    // 줄기
+    final stem = Paint()..color = const Color(0xFF6E8C4E);
+    canvas.drawRect(Rect.fromLTWH(w*0.45, 0, w*0.1, h*0.15), stem);
+    // 딸기 몸체 — 빨강 (살짝 꿀렁)
+    final body = Paint()..color = const Color(0xFFE54D6F);
+    final wobble = math.sin(_bounceTimer * 6) * 0.5;
+    canvas.drawOval(
+      Rect.fromLTWH(w*0.1, h*0.22 + wobble, w*0.8, h*0.72),
+      body,
+    );
+    // 씨앗 (작은 노란 점)
+    final seed = Paint()..color = const Color(0xFFFFE066);
+    for (int i = 0; i < 6; i++) {
+      final dx = (i % 3 - 1) * w * 0.25 + w * 0.5;
+      final dy = (i ~/ 3) * h * 0.18 + h * 0.4;
+      canvas.drawCircle(Offset(dx, dy), 1.5, seed);
+    }
+    // highlight (왼쪽 위)
+    final hi = Paint()..color = Colors.white.withOpacity(0.5);
+    canvas.drawOval(Rect.fromLTWH(w*0.2, h*0.3, w*0.15, h*0.2), hi);
   }
 }
 
