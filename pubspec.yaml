@@ -19,6 +19,7 @@ dependencies:
   xml: ^6.5.0
   url_launcher: ^6.3.1
   image_picker: ^1.1.2
+  flame: ^1.18.0  # 2D 게임 엔진 (Day 1: 도입)
 
 dev_dependencies:
   flutter_test:

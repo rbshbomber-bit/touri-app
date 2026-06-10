@@ -3,9 +3,11 @@ import '../theme/touri_colors.dart';
 import '../theme/touri_theme.dart';
 import '../services/pet_service.dart';
 import '../models/pet_stat.dart';
+import 'package:flame/game.dart';
 import '../widgets/touri_app_bar.dart';
 import '../widgets/touri_motion.dart';
 import '../widgets/touri_game_scene.dart';
+import '../games/touri_flame_game.dart';
 
 /// 토우리 돌보기. 큰 토우리 + 능력치 + 일일 액션 3개 + 진화 컷씬.
 class PetCareScreen extends StatefulWidget {
@@ -37,17 +39,44 @@ class _PetCareScreenState extends State<PetCareScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               children: [
-                // ── 다마고치 게임 화면 (Phase 2 1단계) ──
-                // 토우리가 좌우로 걸어다님 + 가끔 점프 + 탭 반응 + 픽셀 풀바닥
-                TouriGameScene(
-                  framePaths: stage.spriteFramePaths,
-                  fallbackPath: stage.imagePath,
-                  hunger: pet.hunger,
-                  mood: pet.mood,
-                  energy: pet.energy,
-                  streak: pet.streak,
-                  stageLabel: '${stage.emoji} ${stage.label}',
-                  height: 280,
+                // ── 🔥 Flame 게임 엔진 화면 (Day 1) ──
+                // 본격 2D 게임 — Flame이 토우리 행동 자동 관리
+                // 토우리가 자체적으로 걸어다님 + 가끔 점프 + 탭하면 그쪽으로 이동 or 폴짝
+                Container(
+                  height: 300,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: TouriColors.touriPink.withOpacity(0.6),
+                      width: 2,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      GameWidget.controlled(
+                        gameFactory: () => TouriFlameGame(stage: stage),
+                      ),
+                      // 좌상단 단계 라벨 (HUD)
+                      Positioned(
+                        left: 12,
+                        top: 12,
+                        child: _HudChip(
+                          text: '${stage.emoji} ${stage.label}',
+                          fg: const Color(0xFF7B5FB8),
+                        ),
+                      ),
+                      // 우상단 streak
+                      Positioned(
+                        right: 12,
+                        top: 12,
+                        child: _HudChip(
+                          text: '🔥 ${pet.streak}d',
+                          fg: TouriColors.cocoaDark,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 14),
                 // ── 단계 라벨 ──
@@ -339,6 +368,33 @@ class _CareButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HudChip extends StatelessWidget {
+  final String text;
+  final Color fg;
+  const _HudChip({required this.text, required this.fg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: fg.withOpacity(0.4), width: 1),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: fg,
+          letterSpacing: 0.5,
         ),
       ),
     );
