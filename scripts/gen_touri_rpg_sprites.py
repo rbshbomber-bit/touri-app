@@ -64,18 +64,27 @@ def head_outline(img, x, y, w, h):
     px(img, x + w - 1, y + h - 1, NONE)
 
 
+def draw_right_ear_floppy(img, yo=0):
+    """🐰 토우리 시그니처 — 오른쪽 귀가 옆으로 누움 (처짐)."""
+    rect(img, 21, 4 + yo, 6, 3, LILAC_EAR)
+    rect(img, 25, 3 + yo, 2, 4, LILAC_EAR)
+    rect(img, 22, 5 + yo, 4, 1, PINK_EAR)
+    px(img, 26, 4 + yo, PINK_EAR)
+    outline_rect(img, 21, 4 + yo, 6, 3, OUTLINE)
+    outline_rect(img, 25, 3 + yo, 2, 4, OUTLINE)
+
+
 # ────────────────────────────────────────
 # DOWN (정면) — 토우리 얼굴
 # ────────────────────────────────────────
 def draw_down(frame):
     img = canvas()
-    # 귀 (왼/오)
+    # 왼쪽 귀 (위로 솟음)
     rect(img, 6, 2, 4, 8, LILAC_EAR)
     rect(img, 7, 4, 2, 5, PINK_EAR)
-    rect(img, 22, 2, 4, 8, LILAC_EAR)
-    rect(img, 23, 4, 2, 5, PINK_EAR)
     outline_rect(img, 6, 2, 4, 8, OUTLINE)
-    outline_rect(img, 22, 2, 4, 8, OUTLINE)
+    # 오른쪽 귀 — 처짐 (시그니처)
+    draw_right_ear_floppy(img, 0)
     # 머리
     rect(img, 8, 6, 16, 12, WHITE)
     head_outline(img, 7, 5, 18, 14)
@@ -118,11 +127,11 @@ def draw_down(frame):
 # ────────────────────────────────────────
 def draw_up(frame):
     img = canvas()
-    # 귀 (뒤에서 보면 살짝 작게)
+    # 왼쪽 귀 (뒤에서도 위로 솟음)
     rect(img, 7, 2, 3, 7, LILAC_EAR)
-    rect(img, 22, 2, 3, 7, LILAC_EAR)
     outline_rect(img, 7, 2, 3, 7, OUTLINE)
-    outline_rect(img, 22, 2, 3, 7, OUTLINE)
+    # 오른쪽 귀 — 처짐 (시그니처, 뒤에서도 보임)
+    draw_right_ear_floppy(img, 0)
     # 뒷통수
     rect(img, 8, 6, 16, 12, WHITE)
     head_outline(img, 7, 5, 18, 14)
@@ -155,11 +164,14 @@ def draw_up(frame):
 # ────────────────────────────────────────
 def draw_right(frame):
     img = canvas()
-    # 앞귀 (오른쪽 방향이니 오른쪽 귀가 앞)
-    rect(img, 17, 2, 4, 8, LILAC_EAR)
-    rect(img, 18, 4, 2, 5, PINK_EAR)
-    outline_rect(img, 17, 2, 4, 8, OUTLINE)
-    # 뒷귀 (살짝 보임)
+    # 옆 방향 — 앞 귀가 처짐 (오른쪽 귀 = 시그니처 처짐)
+    # 처진 귀가 옆에서 보면 가로로 더 길어 보임
+    rect(img, 16, 4, 8, 3, LILAC_EAR)
+    rect(img, 22, 3, 2, 4, LILAC_EAR)
+    rect(img, 18, 5, 4, 1, PINK_EAR)
+    outline_rect(img, 16, 4, 8, 3, OUTLINE)
+    outline_rect(img, 22, 3, 2, 4, OUTLINE)
+    # 뒷귀 (살짝 보임 — 왼쪽 귀는 위로)
     rect(img, 11, 3, 3, 6, LILAC_EAR)
     outline_rect(img, 11, 3, 3, 6, OUTLINE)
     # 머리 (옆에서 보면 더 동그란 느낌)
