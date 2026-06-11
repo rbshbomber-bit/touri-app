@@ -165,7 +165,7 @@ class _MenuScreenState extends State<MenuScreen> {
       // 🏠 토우리 마을 — RPG (포켓몬 도트 + 모던 UI)
       _MenuItem(
         image: 'assets/character/menu_icons/village.png',
-        imageUrl: 'assets/assets/character/menu_icons/village.png?v=233a88c',
+        imageUrl: 'assets/assets/character/menu_icons/village.png?v=two-ear-20260611',
         label: '토우리 마을 🏠',
         accent: TouriColors.lilac,
         onTap: _openRpg,
