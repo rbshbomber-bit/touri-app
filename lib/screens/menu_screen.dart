@@ -164,7 +164,8 @@ class _MenuScreenState extends State<MenuScreen> {
       ),
       // 🏠 토우리 마을 — RPG (포켓몬 도트 + 모던 UI)
       _MenuItem(
-        image: 'assets/character/menu_icons/pet_growth.png',
+        image: 'assets/character/menu_icons/village.png',
+        imageUrl: 'assets/assets/character/menu_icons/village.png?v=233a88c',
         label: '토우리 마을 🏠',
         accent: TouriColors.lilac,
         onTap: _openRpg,
@@ -270,11 +271,13 @@ class _MenuScreenState extends State<MenuScreen> {
 
 class _MenuItem {
   final String image;
+  final String? imageUrl;
   final String label;
   final Color accent;
   final VoidCallback onTap;
   const _MenuItem({
     required this.image,
+    this.imageUrl,
     required this.label,
     required this.accent,
     required this.onTap,
@@ -340,12 +343,7 @@ class _MenuTileState extends State<_MenuTile>
                   child: Container(
                     color: widget.item.accent,
                     alignment: Alignment.center,
-                    child: Image.asset(
-                      widget.item.image,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                    ),
+                    child: _MenuImage(item: widget.item),
                   ),
                 ),
                 Container(
@@ -369,6 +367,37 @@ class _MenuTileState extends State<_MenuTile>
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MenuImage extends StatelessWidget {
+  final _MenuItem item;
+  const _MenuImage({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final url = item.imageUrl;
+    if (url != null) {
+      return Image.network(
+        Uri.base.resolve(url).toString(),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => Image.asset(
+          item.image,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        ),
+      );
+    }
+
+    return Image.asset(
+      item.image,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
     );
   }
 }
