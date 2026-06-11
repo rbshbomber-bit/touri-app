@@ -32,7 +32,7 @@ class PetStatusCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 토우리 아바타 — 픽셀 sprite 4프레임 자동 순환 (없으면 static)
+                  // 토우리 아바타 — 앱 전체 수채 핑크 테마와 맞춘 정적 일러스트.
                   AnimatedTouriAvatar(
                     child: Container(
                       width: 64,
@@ -50,11 +50,13 @@ class PetStatusCard extends StatelessWidget {
                         ],
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: PixelSpriteAvatar(
-                        framePaths: stage.spriteFramePaths,
-                        fallbackPath: stage.imagePath,
-                        size: 64,
+                      child: Image.asset(
+                        stage.imagePath,
                         fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          stage.fallbackPath,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
