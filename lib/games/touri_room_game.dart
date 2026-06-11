@@ -48,7 +48,15 @@ class TouriRoomGame extends FlameGame with TapCallbacks {
 
     // 토우리 플레이어 (마을과 동일 sprite)
     final (sc, sr) = RoomMap.startTile;
-    _player = TouriPlayer(col: sc, row: sr)..priority = 10;
+    _player = TouriPlayer(
+      col: sc,
+      row: sr,
+      canWalkTile: RoomMap.canWalk,
+      worldSize: Vector2(
+        RoomMap.width * RoomMap.tileSize,
+        RoomMap.height * RoomMap.tileSize,
+      ),
+    )..priority = 10;
     world.add(_player);
 
     // 카메라 — 방 전체가 들어오게 자동 줌 (onGameResize에서 재계산)

@@ -2,21 +2,29 @@ import 'package:flutter/material.dart';
 import '../../theme/touri_colors.dart';
 import '../touri_player.dart';
 
-/// 가상 D-pad — 모던 인터페이스 (둥근 모서리 + 부드러운 컬러)
+/// 가상 D-pad v2 — 꾹 누르고 있는 동안 계속 이동 (홀드 입력).
 class TouriDpad extends StatelessWidget {
-  final void Function(TouriDirection) onDir;
+  final void Function(TouriDirection) onDirStart;
+  final void Function(TouriDirection) onDirEnd;
   final VoidCallback onA;
   final VoidCallback? onB;
 
   const TouriDpad({
     super.key,
-    required this.onDir,
+    required this.onDirStart,
+    required this.onDirEnd,
     required this.onA,
     this.onB,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget btn(IconData icon, TouriDirection d) => _DpadBtn(
+          icon: icon,
+          onDown: () => onDirStart(d),
+          onUp: () => onDirEnd(d),
+        );
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -30,24 +38,23 @@ class TouriDpad extends StatelessWidget {
               Positioned(
                 top: 0,
                 left: 44,
-                child: _DpadBtn(icon: Icons.keyboard_arrow_up, onTap: () => onDir(TouriDirection.up)),
+                child: btn(Icons.keyboard_arrow_up, TouriDirection.up),
               ),
               Positioned(
                 bottom: 0,
                 left: 44,
-                child: _DpadBtn(icon: Icons.keyboard_arrow_down, onTap: () => onDir(TouriDirection.down)),
+                child: btn(Icons.keyboard_arrow_down, TouriDirection.down),
               ),
               Positioned(
                 top: 44,
                 left: 0,
-                child: _DpadBtn(icon: Icons.keyboard_arrow_left, onTap: () => onDir(TouriDirection.left)),
+                child: btn(Icons.keyboard_arrow_left, TouriDirection.left),
               ),
               Positioned(
                 top: 44,
                 right: 0,
-                child: _DpadBtn(icon: Icons.keyboard_arrow_right, onTap: () => onDir(TouriDirection.right)),
+                child: btn(Icons.keyboard_arrow_right, TouriDirection.right),
               ),
-              // 중앙 작은 토우리 핑크 점
               Positioned(
                 top: 56,
                 left: 56,
@@ -99,28 +106,45 @@ class TouriDpad extends StatelessWidget {
 
 class _DpadBtn extends StatefulWidget {
   final IconData icon;
-  final VoidCallback onTap;
-  const _DpadBtn({required this.icon, required this.onTap});
+  final VoidCallback onDown;
+  final VoidCallback onUp;
+  const _DpadBtn({
+    required this.icon,
+    required this.onDown,
+    required this.onUp,
+  });
   @override
   State<_DpadBtn> createState() => _DpadBtnState();
 }
 
 class _DpadBtnState extends State<_DpadBtn> {
   bool _down = false;
+
+  void _press() {
+    if (_down) return;
+    setState(() => _down = true);
+    widget.onDown();
+  }
+
+  void _release() {
+    if (!_down) return;
+    setState(() => _down = false);
+    widget.onUp();
+  }
+
+  @override
+  void dispose() {
+    // 위젯이 사라질 때 (다이얼로그 등) 눌림 상태 누수 방지
+    if (_down) widget.onUp();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _down = true),
-      onTapUp: (_) {
-        setState(() => _down = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _down = false),
-      onLongPressStart: (_) {
-        setState(() => _down = true);
-        widget.onTap();
-      },
-      onLongPressEnd: (_) => setState(() => _down = false),
+    return Listener(
+      onPointerDown: (_) => _press(),
+      onPointerUp: (_) => _release(),
+      onPointerCancel: (_) => _release(),
       child: AnimatedScale(
         scale: _down ? 0.9 : 1.0,
         duration: const Duration(milliseconds: 80),

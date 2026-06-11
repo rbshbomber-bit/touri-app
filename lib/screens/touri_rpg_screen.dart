@@ -1,7 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-import '../rpg/touri_player.dart';
 import '../rpg/touri_rpg_game.dart';
 import '../rpg/widgets/touri_dialog.dart';
 import '../rpg/widgets/touri_dpad.dart';
@@ -11,7 +10,7 @@ import '../theme/touri_colors.dart';
 import '../widgets/touri_app_bar.dart';
 
 /// 토우리 마을 RPG — Flame 게임 + D-pad + 모던 다이얼로그.
-/// 포켓몬 RPG (탑다운) + 동물의숲 (모던 인터페이스) 짬뽕.
+/// v2: 4배 넓어진 마을, 자유 이동, 동물 주민, 낮밤 분위기.
 class TouriRpgScreen extends StatefulWidget {
   const TouriRpgScreen({super.key});
 
@@ -30,12 +29,16 @@ class _TouriRpgScreenState extends State<TouriRpgScreen> {
   }
 
   void _showDialog(String text) {
+    // 같은 다이얼로그 연타 방지
+    if (_dialogText != null) return;
+    // 입력 상태 초기화 (D-pad가 사라지며 up 이벤트가 유실될 수 있음)
+    _game.clearInput();
     // 상호작용 시 능력치 살짝
     if (text.contains('+1')) {
       if (text.contains('사랑')) {
         PetService.instance.reward(PetStat.love, amount: 1, source: '마을 산책');
       } else if (text.contains('행복')) {
-        PetService.instance.reward(PetStat.sparkle, amount: 1, source: '꽃 따기');
+        PetService.instance.reward(PetStat.sparkle, amount: 1, source: '마을 산책');
       } else if (text.contains('에너지')) {
         PetService.instance.reward(PetStat.focus, amount: 1, source: '우물물');
       }
@@ -70,11 +73,11 @@ class _TouriRpgScreenState extends State<TouriRpgScreen> {
               child: GameWidget(game: _game),
             ),
             // 우상단 안내 chip
-            Positioned(
+            const Positioned(
               top: 10,
               right: 12,
               child: _HintChip(
-                text: '🌸 꽃·집 옆에서 A',
+                text: '🌸 꾹 눌러 산책 · 친구 옆에서 A',
               ),
             ),
             // 하단 D-pad (다이얼로그 떠 있으면 숨김)
@@ -84,7 +87,8 @@ class _TouriRpgScreenState extends State<TouriRpgScreen> {
                 right: 12,
                 bottom: 16,
                 child: TouriDpad(
-                  onDir: (d) => _game.moveDir(d),
+                  onDirStart: (d) => _game.pressDir(d),
+                  onDirEnd: (d) => _game.releaseDir(d),
                   onA: () => _game.interact(),
                 ),
               ),
